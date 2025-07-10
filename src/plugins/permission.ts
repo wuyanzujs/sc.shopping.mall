@@ -1,7 +1,6 @@
 import {
   ERROR404_PATH,
   isPathExists,
-  LOGIN_PATH,
   removeQueryString,
   routes,
 } from '@/router';
@@ -31,9 +30,9 @@ export function hasPerm(path = '') {
   const hasPermission
     = whiteList.includes(removeQueryString(path)) || isLogin();
   if (!hasPermission) {
-    // 将用户的目标路径传递过去，这样可以实现用户登录之后，直接跳转到目标页面
-    uni.redirectTo({
-      url: `${LOGIN_PATH}?redirect=${encodeURIComponent(path)}`,
+    // 跳转到用户页面进行登录
+    uni.switchTab({
+      url: '/pages/tab/user/index',
     });
   }
   return hasPermission;
