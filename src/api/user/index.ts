@@ -1,18 +1,20 @@
 /**
  * 用户信息相关接口
  */
-import type { CommonRes } from '@/api/common/types';
-import type { LoginByCodeReq, LoginByCodeRes, LoginReq, LoginRes, ProfileReq, ProfileRes } from './types';
+import type { LoginByCodeRes, LoginRes, SignUpParams, SignUpRes, UserPhoneNumber } from './types';
 import { get, post } from '@/utils/request';
-
-/** 获取用户信息 */
-export const profile = (params?: ProfileReq) => get<ProfileRes>('/user/profile', { params });
+import { API_URL, BU_URL } from '../config';
 
 /** 登录 */
-export const login = (data: LoginReq) => post<LoginRes>('/user/login', { data, custom: { auth: false } });
+// export const login = (data: LoginReq) => post<LoginRes>(`${BU_URL}/user_app/accounts/signup`, { data, custom: { auth: false } });
 
-/** 验证码登录 */
-export const loginByCode = (data: LoginByCodeReq) => post<LoginByCodeRes>('/user/loginByCode', { data });
+export const loginByCode = (code: string) => get<LoginByCodeRes>(`${API_URL}/wx/wx/agent/session/${code}`);
 
-/** 退出登录 */
-export const logout = () => post<CommonRes>('/user/logout');
+// 获取用户信息
+export const getUserInfo = (openid: string) => get<LoginRes>(`${BU_URL}/user_app/account-openid/${openid})`);
+
+// 获取手机号
+export const getUserPhonenumber = (code: any) => get<UserPhoneNumber>(`${API_URL}/wx/wx/agent/phone/${code}`);
+
+// 注册
+export const signUp = (data: SignUpParams) => post<SignUpRes>(`${BU_URL}/user_app/accounts/signup`, { data });

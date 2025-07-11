@@ -20,6 +20,16 @@ export default antfu(
       'vue/block-order': ['error', {
         order: ['template', 'script', 'style'],
       }],
+      'vue/custom-event-name-casing': ['error', 'kebab-case'],
+      'vue/html-self-closing': ['error', {
+        html: {
+          void: 'always',
+          normal: 'always',
+          component: 'always',
+        },
+        svg: 'always',
+        math: 'always',
+      }],
       // 需要尾随逗号
       'comma-dangle': ['error', 'only-multiline'],
       // 允许console

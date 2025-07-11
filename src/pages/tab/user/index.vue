@@ -1,17 +1,19 @@
 <template>
+  <u-navbar title="我的" left-icon="" placeholder bg-color="transparent" title-style="font-weight: 600;" />
+  <img class="user-bg" src="@/static/user/userbg.png" alt="" />
   <view class="page-wrap">
     <!-- 用户信息区域 -->
     <view class="user-info-section">
-      <view class="user-avatar">
-        <u-avatar
-          :src="isLoggedIn ? userInfo.avatarUrl : '/static/images/default-avatar.png'"
-          size="60"
-        />
-      </view>
-      <view class="login-section">
-        <text class="login-text" @click="handleAvatarClick">
-          {{ isLoggedIn ? userInfo.nickName : '注册 / 登录' }}
-        </text>
+      <view class="user-header">
+        <view class="user-avatar">
+          <!-- <u-avatar :src="isLoggedIn ? userInfo.avatar : '/static/images/default-avatar.png'" size="60" /> -->
+          <u-avatar src="/static/images/default-avatar.png" size="60" />
+        </view>
+        <view class="user-info">
+          <text class="user-name" @click="handleAvatarClick">
+            {{ '未登录' }}
+          </text>
+        </view>
       </view>
     </view>
 
@@ -96,181 +98,138 @@
         </view>
       </view>
     </view>
-
-    <!-- 退出登录按钮 -->
-    <view v-if="isLoggedIn" class="logout-section">
-      <u-button
-        type="default"
-        size="large"
-        custom-style="background: #f8f8f8; color: #333; border: none;"
-        @click="logout"
-      >
-        退出登录
-      </u-button>
-    </view>
   </view>
+
+  <u-popup round="20" :show="isOpenLoginPopup && !isLoggedIn" @close="closeLoginForm">
+    <div class="login-popup">
+      <div class="title center">
+        隐私政策提示
+      </div>
+      <template v-if="isLoggedIn">
+        <button
+          v-if="allowChecked" class="phone-btn center" open-type="getPhoneNumber"
+          @getphonenumber="getPhoneNumber"
+        >
+          手机号登录
+        </button>
+        <button v-else class="phone-btn center" @click="isChecked">
+          手机号登录
+        </button>
+      </template>
+
+      <div class="checkbox">
+        <up-checkbox
+          v-model:checked="allowChecked" :custom-style="{ marginBottom: '8px' }" name="agree" used-alone
+          @change="() => { allowChecked = !allowChecked }"
+        >
+          <template #label>
+            <div class="text-28 text-#2F384C">
+              同意<span class="primary-color">用户协议</span>与<span class="primary-color">隐私条款</span>
+            </div>
+          </template>
+        </up-checkbox>
+      </div>
+    </div>
+  </u-popup>
 </template>
 
 <script setup lang="ts">
-import { clearToken, getToken } from '@/utils/auth';
+import { useUserStore } from '@/store';
 
-// 登录状态
-const isLoggedIn = ref(false);
+const isOpenLoginPopup = ref(false);
+const allowChecked = ref(false);
+const userStore = useUserStore();
+// const isLogin = ref(false);
 
-// 用户信息
-const userInfo = ref({
-  nickName: '',
-  avatarUrl: '',
-  phoneNumber: '',
+// 计算属性：是否已登录
+const isLoggedIn = computed(() => {
+  // return !!userStore.userInfo.openid && !!userStore.userInfo?.mobile;
+  return '';
 });
 
-// 检查登录状态
+const closeLoginForm = () => {
+  isOpenLoginPopup.value = false;
+};
+
+// 用户信息
+// const userInfo = computed(() => {
+//   return userStore.userInfo;
+// });
+
+// 检查登录状态并决定是否显示弹窗
 const checkLoginStatus = () => {
-  const token = getToken();
-  isLoggedIn.value = !!token;
-  if (isLoggedIn.value) {
-    // 如果已登录，从本地存储获取用户信息
-    const savedUserInfo = uni.getStorageSync('userInfo');
-    if (savedUserInfo) {
-      userInfo.value = savedUserInfo;
-    }
+  // if (!isLoggedIn.value) {
+  //   isOpenLoginPopup.value = true; // 未登录时显示弹窗
+  // }
+  // else {
+  //   isOpenLoginPopup.value = false; // 已登录时隐藏弹窗
+  // }
+};
+
+// 微信授权登录（获取openid）
+const wxLogin = async () => {
+  try {
+    await userStore.authLogin();
+  }
+  catch (error: any) {
+    uni.showToast({
+      title: error.message || '授权失败，请重试',
+      icon: 'none',
+    });
+    console.error('微信授权失败:', error);
   }
 };
 
 // 点击头像区域
-const handleAvatarClick = () => {
+const handleAvatarClick = async () => {
   if (!isLoggedIn.value) {
-    // wxLogin();
-  }
-  else {
-    // 已登录，可以跳转到个人信息页面
-    uni.showToast({
-      title: '跳转到个人信息',
-      icon: 'none',
-    });
+    await wxLogin();
   }
 };
 
-// 获取手机号
-// const getPhoneNumber = (): Promise<string> => {
-//   return new Promise((resolve, reject) => {
-//     uni.showModal({
-//       title: '获取手机号',
-//       content: '需要获取您的手机号以完善账户信息',
-//       confirmText: '授权',
-//       cancelText: '跳过',
-//       success: (res) => {
-//         if (res.confirm) {
-//           // 在实际项目中，这里应该调用 uni.getPhoneNumber() 或使用button的open-type="getPhoneNumber"
-//           // 这里模拟获取手机号
-//           uni.showModal({
-//             title: '手机号授权',
-//             content: '请在弹出的授权框中确认',
-//             showCancel: false,
-//             success: () => {
-//               // 模拟获取到的手机号
-//               resolve('138****8888');
-//             },
-//           });
-//         }
-//         else {
-//           resolve(''); // 用户跳过手机号授权
-//         }
-//       },
-//       fail: () => {
-//         reject(new Error('获取手机号失败'));
-//       },
-//     });
-//   });
-// };
+// 获取手机号并完成注册
+const getPhoneNumber = async (e: any) => {
+  if (!e.detail.code) {
+    uni.showToast({ icon: 'none', title: '登录前请授权获取手机号' });
+    return;
+  }
 
-// 微信登录
-// const wxLogin = async () => {
-//   try {
-//     uni.showLoading({
-//       title: '登录中...',
-//     });
+  uni.showLoading({ title: '登录中...', mask: true });
 
-//     // 1. 获取微信登录code
-//     const [loginError, loginRes] = await uni.login({
-//       provider: 'weixin',
-//     });
+  try {
+    const phoneInfo = await userStore.getUserPhonenumber(e.detail.code);
+    const signInfo = {
+      unionid: '',
+      openid: userStore.openid!,
+      nickname: '微信用户',
+      avatarUrl: '',
+      mobile: phoneInfo.purePhoneNumber,
+      app: 'agent',
+    };
+    await userStore.signUp(signInfo);
 
-//     if (loginError || !loginRes.code) {
-//       throw new Error('获取微信授权失败');
-//     }
+    // 注册成功后关闭弹窗
+    isOpenLoginPopup.value = false;
+    uni.showToast({
+      title: '登录成功',
+      icon: 'success',
+    });
+  }
+  catch (error: any) {
+    uni.showToast({
+      title: error.message || '登录失败，请重试',
+      icon: 'none',
+    });
+  }
+  finally {
+    uni.hideLoading();
+  }
+};
 
-//     // 2. 获取用户信息
-//     const [userInfoError, userInfoRes] = await uni.getUserInfo({
-//       provider: 'weixin',
-//     });
-
-//     if (userInfoError || !userInfoRes.userInfo) {
-//       throw new Error('获取用户信息失败');
-//     }
-
-//     // 3. 获取手机号（需要用户主动授权）
-//     const phoneNumber = await getPhoneNumber();
-
-//     // 4. 组装用户信息
-//     const userData = {
-//       code: loginRes.code,
-//       nickName: userInfoRes.userInfo.nickName,
-//       avatarUrl: userInfoRes.userInfo.avatarUrl,
-//       phoneNumber,
-//     };
-
-//     // 5. 调用后端接口进行登录验证（这里模拟）
-//     // const res = await api.wechatLogin(userData);
-
-//     // 模拟登录成功
-//     const token = `wechat_token_${Date.now()}`;
-//     setToken(token);
-
-//     // 保存用户信息到本地
-//     userInfo.value = userData;
-//     uni.setStorageSync('userInfo', userData);
-
-//     isLoggedIn.value = true;
-
-//     uni.hideLoading();
-//     uni.showToast({
-//       title: '登录成功',
-//       icon: 'success',
-//     });
-//   }
-//   catch (error: any) {
-//     uni.hideLoading();
-//     uni.showToast({
-//       title: error.message || '登录失败，请重试',
-//       icon: 'none',
-//     });
-//     console.error('微信登录失败:', error);
-//   }
-// };
-
-// 退出登录
-const logout = () => {
-  uni.showModal({
-    title: '提示',
-    content: '确定要退出登录吗？',
-    success: (res) => {
-      if (res.confirm) {
-        clearToken();
-        uni.removeStorageSync('userInfo');
-        userInfo.value = {
-          nickName: '',
-          avatarUrl: '',
-          phoneNumber: '',
-        };
-        isLoggedIn.value = false;
-        uni.showToast({
-          title: '已退出登录',
-          icon: 'success',
-        });
-      }
-    },
-  });
+const isChecked = () => {
+  if (!allowChecked.value) {
+    uni.showToast({ icon: 'none', title: '请勾选同意协议' });
+  }
 };
 
 // 页面显示时检查登录状态
@@ -282,8 +241,6 @@ onShow(() => {
 onMounted(() => {
   checkLoginStatus();
 });
-
-// 在script部分添加以下方法：
 
 // 跳转到收货地址页面
 const goToAddress = () => {
@@ -302,14 +259,19 @@ const goToSettings = () => {
 
 // 拨打客服电话
 const callCustomerService = () => {
-  uni.makePhoneCall({
-    phoneNumber: '400-123-4567',
-    fail: () => {
-      uni.showToast({
-        title: '拨号失败',
-        icon: 'none',
-      });
-    },
+  // uni.makePhoneCall({
+  // phoneNumber: '400-123-4567',
+  // fail: () => {
+  // uni.showToast({
+  // title: '拨号失败',
+  // icon: 'none',
+  // });
+  // },
+  // });
+
+  uni.showToast({
+    title: '客服电话功能开发中',
+    icon: 'none',
   });
 };
 
@@ -323,22 +285,66 @@ const openOnlineService = () => {
 </script>
 
 <style lang="scss" scoped>
-.user-info-section {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 40rpx 0 60rpx;
-  margin-top: 160rpx;
+.login-popup {
+  padding: 30rpx 20rpx;
 
-  .user-avatar {
-    margin-bottom: 30rpx;
+  .title {
+    font-size: 30rpx;
+    margin-bottom: 40rpx;
   }
 
-  .login-section {
-    .login-text {
-      font-size: 32rpx;
-      color: #333;
-      font-weight: 500;
+  .phone-btn {
+    font-size: 30rpx;
+    width: 100%;
+    height: 80rpx;
+    border-radius: 40rpx;
+    background-color: #42a5f5;
+    color: #fff;
+    margin-bottom: 20rpx;
+  }
+
+  .checkbox {
+    margin-bottom: 24rpx;
+    display: flex;
+    align-items: center;
+    gap: 10rpx;
+  }
+}
+
+.user-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: -1;
+  width: 100%;
+  height: 800rpx;
+}
+
+.user-info-section {
+  padding: 60rpx 30rpx 40rpx;
+
+  .user-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 40rpx;
+
+    .user-avatar {
+      margin-right: 30rpx;
+    }
+
+    .user-info {
+      flex: 1;
+
+      .user-name {
+        font-size: 36rpx;
+        font-weight: 600;
+        color: #333;
+      }
+    }
+
+    .user-actions {
+      display: flex;
+      align-items: center;
     }
   }
 }
@@ -346,16 +352,22 @@ const openOnlineService = () => {
 .order-section {
   display: flex;
   background: white;
-  margin: 30rpx;
+  margin: 0 30rpx 30rpx;
   border-radius: 20rpx;
-  padding: 40rpx 20rpx;
-  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.1);
+  padding: 30rpx 20rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.08);
 
   .order-item {
     display: flex;
     flex-direction: column;
     align-items: center;
     flex: 1;
+    transition: all 0.3s ease;
+
+    &:active {
+      transform: scale(0.95);
+      opacity: 0.8;
+    }
 
     .order-icon {
       width: 60rpx;
@@ -380,13 +392,23 @@ const openOnlineService = () => {
 
   .grid-row {
     display: flex;
-    margin-bottom: 30rpx;
+    background: white;
+    border-radius: 20rpx;
+    padding: 30rpx 20rpx;
+    margin-bottom: 20rpx;
+    box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.08);
 
     .grid-item {
       display: flex;
       flex-direction: column;
       align-items: center;
       flex: 1;
+      transition: all 0.3s ease;
+
+      &:active {
+        transform: scale(0.95);
+        opacity: 0.8;
+      }
 
       .grid-icon {
         width: 60rpx;
@@ -398,7 +420,7 @@ const openOnlineService = () => {
         margin-bottom: 15rpx;
 
         &.blue {
-          background: linear-gradient(135deg, #339af0, #228be6);
+          background: linear-gradient(135deg, #42a5f5, #2196f3);
         }
 
         &.blue-light {
@@ -421,9 +443,5 @@ const openOnlineService = () => {
       }
     }
   }
-}
-
-.logout-section {
-  margin: 60rpx 30rpx 0;
 }
 </style>

@@ -4,13 +4,11 @@ import type {
   HttpRequestConfig,
   HttpResponse,
 } from 'uview-plus/libs/luch-request/index';
-import { useUserStore } from '@/store';
-import { getToken } from '@/utils/auth';
 import storage from '@/utils/storage';
 import { showMessage } from './status';
 
 // 重试队列，每一项将是一个待执行的函数形式
-let requestQueue: (() => void)[] = [];
+// let requestQueue: (() => void)[] = [];
 
 // 防止重复提交
 const repeatSubmit = (config: HttpRequestConfig) => {
@@ -39,34 +37,6 @@ const repeatSubmit = (config: HttpRequestConfig) => {
   }
 };
 
-// 是否正在刷新token的标记
-let isRefreshing: boolean = false;
-
-// 刷新token
-const refreshToken = async (http: HttpRequestAbstract, config: HttpRequestConfig) => {
-  // 是否在获取token中,防止重复获取
-  if (!isRefreshing) {
-    // 修改登录状态为true
-    isRefreshing = true;
-    // 等待登录完成
-    await useUserStore().authLogin();
-    // 登录完成之后，开始执行队列请求
-    requestQueue.forEach(cb => cb());
-    // 重试完了清空这个队列
-    requestQueue = [];
-    isRefreshing = false;
-    // 重新执行本次请求
-    return http.request(config);
-  }
-
-  return new Promise<HttpResponse<any>>((resolve) => {
-    // 将resolve放进队列，用一个函数形式来保存，等登录后直接执行
-    requestQueue.push(() => {
-      resolve(http.request(config));
-    });
-  });
-};
-
 function requestInterceptors(http: HttpRequestAbstract) {
   /**
    * 请求拦截
@@ -81,11 +51,11 @@ function requestInterceptors(http: HttpRequestAbstract) {
       const custom = config?.custom;
 
       // 是否需要设置 token
-      const isToken = custom?.auth === false;
-      if (getToken() && !isToken && config.header) {
-        // token设置
-        config.header.token = getToken();
-      }
+      // const isToken = custom?.auth === false;
+      // if (getToken() && !isToken && config.header) {
+      //   // token设置
+      //   config.header.token = getToken();
+      // }
 
       // 是否显示 loading
       if (custom?.loading) {
@@ -121,7 +91,7 @@ function responseInterceptors(http: HttpRequestAbstract) {
 
     // 登录状态失效，重新登录
     if (data.code === 401) {
-      return refreshToken(http, config);
+      // return refreshToken(http, config);
     }
 
     // 隐藏loading

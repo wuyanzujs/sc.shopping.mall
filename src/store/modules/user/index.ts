@@ -1,16 +1,17 @@
-import type { LoginReq } from '@/api/user/types';
+import type { SignUpParams } from '@/api/user/types';
 import type { providerType, UserState } from './types';
 import { UserApi } from '@/api';
-import { clearToken, setToken } from '@/utils/auth';
 
 import { defineStore } from 'pinia';
 
 const useUserStore = defineStore('user', {
   state: (): UserState => ({
+    openid: '',
+    unionid: '',
     user_id: '',
-    user_name: '江阳小道',
+    user_name: '',
     avatar: '',
-    token: '',
+    mobile: '',
   }),
   getters: {
     userInfo(state: UserState): UserState {
@@ -18,39 +19,6 @@ const useUserStore = defineStore('user', {
     },
   },
   actions: {
-    // 设置用户的信息
-    setInfo(partial: Partial<UserState>) {
-      this.$patch(partial);
-    },
-    // 重置用户信息
-    resetInfo() {
-      this.$reset();
-    },
-    // 获取用户信息
-    async info() {
-      const result = await UserApi.profile();
-      this.setInfo(result);
-    },
-    // 异步登录并存储token
-    login(loginForm: LoginReq) {
-      return new Promise((resolve, reject) => {
-        UserApi.login(loginForm).then((res) => {
-          const token = res.token;
-          if (token) {
-            setToken(token);
-          }
-          resolve(res);
-        }).catch((error) => {
-          reject(error);
-        });
-      });
-    },
-    // Logout
-    async logout() {
-      await UserApi.logout();
-      this.resetInfo();
-      clearToken();
-    },
     // 小程序授权登录
     authLogin(provider: providerType = 'weixin') {
       return new Promise((resolve, reject) => {
@@ -58,7 +26,8 @@ const useUserStore = defineStore('user', {
           provider,
           success: async (result: UniApp.LoginRes) => {
             if (result.code) {
-              const res = await UserApi.loginByCode({ code: result.code });
+              const res = await UserApi.loginByCode(result.code);
+              this.openid = res.openid;
               resolve(res);
             }
             else {
@@ -71,6 +40,30 @@ const useUserStore = defineStore('user', {
           },
         });
       });
+    },
+
+    // 获取用户信息
+    async profile() {
+      return await UserApi.getUserInfo(this.openid!);
+    },
+
+    // 获取手机号
+    async getUserPhonenumber(code: string) {
+      const phoneInfo = await UserApi.getUserPhonenumber(code);
+      return phoneInfo.phone_info;
+    },
+
+    async signUp(signInfo: SignUpParams) {
+      const userinfo = await UserApi.signUp(signInfo);
+      this.user_name = userinfo.nickname;
+      this.avatar = userinfo.avatarUrl;
+      this.mobile = userinfo.mobile;
+      this.unionid = userinfo.unionid;
+    },
+
+    // 退出登录
+    async logout() {
+      this.$reset();
     },
   },
   persist: true,

@@ -36,7 +36,7 @@
     "dev:h5:ssr": "uni --ssr",
     "dev:h5-test": "uni --mode test",
     "dev:h5-pro": "uni --mode production",
-    "dev": "uni -p mp-weixin",
+    "dev": "uni -p mp-weixin --mode development",
     "dev:mp-weixin-test": "uni -p mp-weixin --mode test",
     "dev:mp-weixin-prod": "uni -p mp-weixin --mode production",
     "dev:app": "uni -p app",

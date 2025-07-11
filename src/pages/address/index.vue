@@ -53,18 +53,18 @@
             <u-button
               type="default"
               size="mini"
-              custom-style="margin-right: 10rpx; background: #f0f0f0; color: #666;"
-              @click="editAddress(item)"
+              custom-style="margin-right: 10rpx; background: #ddd; color: #999;"
+              @click="deleteAddress(item)"
             >
-              修改
+              删除
             </u-button>
             <u-button
               type="default"
               size="mini"
-              custom-style="background: #ff4757; color: #fff;"
-              @click="deleteAddress(item)"
+              custom-style="background: #4F95FF; color: #fff;"
+              @click="editAddress(item)"
             >
-              删除
+              修改
             </u-button>
           </view>
         </view>
@@ -168,7 +168,7 @@
               </text>
               <u-switch
                 v-model="newAddress.isDefault"
-                active-color="#ff6b35"
+                active-color="#4F95FF"
                 size="24"
               />
             </view>
@@ -185,7 +185,7 @@
           </u-button>
           <u-button
             type="primary"
-            custom-style="background: #ff6b35; border: none;"
+            custom-style="background: #4F95FF; border: none;"
             @click="saveAddress"
           >
             保存
@@ -243,7 +243,6 @@ const addressList = ref<AddressItem[]>([
     district: '',
     detailAddress: '塘泾南苑7号楼501',
     isDefault: true,
-
     selected: true,
   },
   {
@@ -255,7 +254,6 @@ const addressList = ref<AddressItem[]>([
     district: '',
     detailAddress: '连谷新兴科技产业园1号楼11层',
     isDefault: false,
-
     selected: false,
   },
   {
@@ -267,7 +265,28 @@ const addressList = ref<AddressItem[]>([
     district: '建安区',
     detailAddress: '步郑村',
     isDefault: false,
-
+    selected: false,
+  },
+  {
+    id: '3',
+    receiverName: '赵鑫',
+    phone: '15136805262',
+    province: '河南',
+    city: '许昌市',
+    district: '建安区',
+    detailAddress: '步郑村',
+    isDefault: false,
+    selected: false,
+  },
+  {
+    id: '3',
+    receiverName: '赵鑫',
+    phone: '15136805262',
+    province: '河南',
+    city: '许昌市',
+    district: '建安区',
+    detailAddress: '步郑村',
+    isDefault: false,
     selected: false,
   },
 ]);
@@ -559,7 +578,7 @@ const handleSetDefault = (item: AddressItem) => {
 }
 
 .default-tag {
-  background-color: #ff6b35;
+  background-color: #4F95FF;
   border-radius: 8rpx;
   padding: 2rpx 10rpx;
   margin-right: 10rpx;
@@ -611,15 +630,15 @@ const handleSetDefault = (item: AddressItem) => {
   width: 32rpx;
   height: 32rpx;
   border: 2rpx solid #ddd;
-  border-radius: 4rpx;
+  border-radius: 16rpx;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.3s ease;
 
   &.checked {
-    background-color: #ff6b35;
-    border-color: #ff6b35;
+    background-color: #4F95FF;
+    border-color: #4F95FF;
   }
 }
 
@@ -663,7 +682,7 @@ const handleSetDefault = (item: AddressItem) => {
 }
 
 .bottom-add-btn {
-  background-color: #ff6b35;
+  background-color: #4F95FF;
   border-radius: 12rpx;
   padding: 20rpx;
   text-align: center;

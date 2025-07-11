@@ -32,6 +32,9 @@ export default defineConfig({
   shortcuts: {
     'border-base': 'border border-gray-500_10',
     'center': 'flex justify-center items-center',
+    'wh-full': 'w-full h-full',
+    'primary-color': `text-[#4F95FF]`, // 主题色
+    'primary-btn': `bg-[#4F95FF]`,
   },
   transformers: [
     // 启用 @apply 功能
