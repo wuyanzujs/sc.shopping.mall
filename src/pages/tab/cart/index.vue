@@ -41,9 +41,6 @@ import Checkbox from '@/components/checkbox/index.vue';
 import { computed, ref } from 'vue';
 import ProductItem from './components/product-item.vue';
 
-// 响应式数据
-// const showNotice = ref(true);
-
 // 模拟购物车数据
 const mockCartItems = ref([
   {
@@ -130,18 +127,6 @@ const isAllSelected = computed({
     });
   },
 });
-
-// 方法
-// function openLocation() {
-//   uni.showToast({
-//     title: '正在开启定位权限...',
-//     icon: 'loading',
-//   });
-// }
-
-// function closeNotice() {
-//   showNotice.value = false;
-// }
 
 function toggleItemSelect(item, value) {
   item.selected = value;

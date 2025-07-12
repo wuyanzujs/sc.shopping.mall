@@ -26,6 +26,12 @@ importers:
       dayjs:
         specifier: ^1.11.13
         version: 1.11.13
+      deep-pick-omit:
+        specifier: ^1.2.1
+        version: 1.2.1
+      destr:
+        specifier: ^2.0.5
+        version: 2.0.5
       pinia:
         specifier: 2.2.4
         version: 2.2.4(typescript@5.8.3)(vue@3.4.21(typescript@5.8.3))

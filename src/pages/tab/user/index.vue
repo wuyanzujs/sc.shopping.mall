@@ -6,12 +6,11 @@
     <view class="user-info-section">
       <view class="user-header">
         <view class="user-avatar">
-          <!-- <u-avatar :src="isLoggedIn ? userInfo.avatar : '/static/images/default-avatar.png'" size="60" /> -->
-          <u-avatar src="/static/images/default-avatar.png" size="60" />
+          <u-avatar :src="isLoggedIn ? userStore.avatar : '/static/images/default-avatar.png'" size="60" />
         </view>
         <view class="user-info">
           <text class="user-name" @click="handleAvatarClick">
-            {{ '未登录' }}
+            {{ isLoggedIn ? (userStore.user_name || '微信用户') : '未登录' }}
           </text>
         </view>
       </view>
@@ -19,7 +18,7 @@
 
     <!-- 订单功能区域 -->
     <view class="order-section">
-      <view class="order-item">
+      <view class="order-item" @click="checkLoginAndNavigate('order-pending')">
         <view class="order-icon">
           <u-icon name="file-text" size="24" color="#666" />
         </view>
@@ -27,7 +26,7 @@
           待支付
         </text>
       </view>
-      <view class="order-item">
+      <view class="order-item" @click="checkLoginAndNavigate('order-shipped')">
         <view class="order-icon">
           <u-icon name="car" size="24" color="#666" />
         </view>
@@ -35,7 +34,7 @@
           待发货
         </text>
       </view>
-      <view class="order-item">
+      <view class="order-item" @click="checkLoginAndNavigate('order-received')">
         <view class="order-icon">
           <u-icon name="home" size="24" color="#666" />
         </view>
@@ -43,7 +42,7 @@
           待收货
         </text>
       </view>
-      <view class="order-item">
+      <view class="order-item" @click="checkLoginAndNavigate('order-refund')">
         <view class="order-icon">
           <u-icon name="reload" size="24" color="#666" />
         </view>
@@ -51,7 +50,7 @@
           退款/售后
         </text>
       </view>
-      <view class="order-item">
+      <view class="order-item" @click="checkLoginAndNavigate('order-list')">
         <view class="order-icon">
           <u-icon name="list" size="24" color="#666" />
         </view>
@@ -64,7 +63,7 @@
     <!-- 功能网格区域 -->
     <view class="function-grid">
       <view class="grid-row">
-        <view class="grid-item" @click="goToAddress">
+        <view class="grid-item" @click="checkLoginAndNavigate('address')">
           <view class="grid-icon blue">
             <u-icon name="map" size="20" color="#fff" />
           </view>
@@ -72,7 +71,7 @@
             收货地址
           </text>
         </view>
-        <view class="grid-item" @click="goToSettings">
+        <view class="grid-item" @click="checkLoginAndNavigate('settings')">
           <view class="grid-icon blue-light">
             <u-icon name="setting" size="20" color="#fff" />
           </view>
@@ -100,23 +99,21 @@
     </view>
   </view>
 
-  <u-popup round="20" :show="isOpenLoginPopup && !isLoggedIn" @close="closeLoginForm">
+  <!-- 登录弹窗 -->
+  <u-popup round="20" :show="isOpenLoginPopup" @close="closeLoginForm">
     <div class="login-popup">
       <div class="title center">
         隐私政策提示
       </div>
-      <template v-if="isLoggedIn">
-        <button
-          v-if="allowChecked" class="phone-btn center" open-type="getPhoneNumber"
-          @getphonenumber="getPhoneNumber"
-        >
-          手机号登录
-        </button>
-        <button v-else class="phone-btn center" @click="isChecked">
-          手机号登录
-        </button>
-      </template>
-
+      <button
+        v-if="allowChecked" class="phone-btn center" open-type="getPhoneNumber"
+        @getphonenumber="getPhoneNumber"
+      >
+        手机号登录
+      </button>
+      <button v-else class="phone-btn center" @click="isChecked">
+        手机号登录
+      </button>
       <div class="checkbox">
         <up-checkbox
           v-model:checked="allowChecked" :custom-style="{ marginBottom: '8px' }" name="agree" used-alone
@@ -139,37 +136,30 @@ import { useUserStore } from '@/store';
 const isOpenLoginPopup = ref(false);
 const allowChecked = ref(false);
 const userStore = useUserStore();
-// const isLogin = ref(false);
 
-// 计算属性：是否已登录
+// 计算属性：是否已登录 - 直接访问 store 属性
 const isLoggedIn = computed(() => {
-  // return !!userStore.userInfo.openid && !!userStore.userInfo?.mobile;
-  return '';
+  return !!userStore.openid && !!userStore.mobile;
 });
 
 const closeLoginForm = () => {
   isOpenLoginPopup.value = false;
-};
-
-// 用户信息
-// const userInfo = computed(() => {
-//   return userStore.userInfo;
-// });
-
-// 检查登录状态并决定是否显示弹窗
-const checkLoginStatus = () => {
-  // if (!isLoggedIn.value) {
-  //   isOpenLoginPopup.value = true; // 未登录时显示弹窗
-  // }
-  // else {
-  //   isOpenLoginPopup.value = false; // 已登录时隐藏弹窗
-  // }
+  // 打开Tabbar
+  uni.showTabBar({
+    animation: true,
+  });
 };
 
 // 微信授权登录（获取openid）
 const wxLogin = async () => {
   try {
     await userStore.authLogin();
+    // 获取openid后显示登录弹窗
+    isOpenLoginPopup.value = true;
+    // 关闭Tabbar
+    uni.hideTabBar({
+      animation: false,
+    });
   }
   catch (error: any) {
     uni.showToast({
@@ -180,10 +170,56 @@ const wxLogin = async () => {
   }
 };
 
-// 点击头像区域
+// 点击头像区域 - 主动触发登录
 const handleAvatarClick = async () => {
   if (!isLoggedIn.value) {
     await wxLogin();
+  }
+};
+
+// 跳转到收货地址页面
+const goToAddress = () => {
+  uni.navigateTo({
+    url: '/pages/address/index',
+  });
+};
+
+// 跳转到通用设置
+const goToSettings = () => {
+  uni.showToast({
+    title: '功能开发中',
+    icon: 'none',
+  });
+};
+
+// 检查登录状态并导航或弹出登录窗
+const checkLoginAndNavigate = async (action: string) => {
+  if (!isLoggedIn.value) {
+    // 未登录，先进行微信授权
+    await wxLogin();
+    return;
+  }
+
+  // 已登录，执行相应操作
+  switch (action) {
+    case 'address':
+      goToAddress();
+      break;
+    case 'settings':
+      goToSettings();
+      break;
+    case 'order-pending':
+    case 'order-shipped':
+    case 'order-received':
+    case 'order-refund':
+    case 'order-list':
+      uni.showToast({
+        title: '订单功能开发中',
+        icon: 'none',
+      });
+      break;
+    default:
+      console.log('未知操作:', action);
   }
 };
 
@@ -210,6 +246,10 @@ const getPhoneNumber = async (e: any) => {
 
     // 注册成功后关闭弹窗
     isOpenLoginPopup.value = false;
+    // 打开tabbar
+    uni.showTabBar({
+      animation: true,
+    });
     uni.showToast({
       title: '登录成功',
       icon: 'success',
@@ -232,43 +272,9 @@ const isChecked = () => {
   }
 };
 
-// 页面显示时检查登录状态
-onShow(() => {
-  checkLoginStatus();
-});
-
-// 页面加载时检查登录状态
-onMounted(() => {
-  checkLoginStatus();
-});
-
-// 跳转到收货地址页面
-const goToAddress = () => {
-  uni.navigateTo({
-    url: '/pages/address/index',
-  });
-};
-
-// 跳转到通用设置
-const goToSettings = () => {
-  uni.showToast({
-    title: '功能开发中',
-    icon: 'none',
-  });
-};
-
 // 拨打客服电话
 const callCustomerService = () => {
-  // uni.makePhoneCall({
-  // phoneNumber: '400-123-4567',
-  // fail: () => {
-  // uni.showToast({
-  // title: '拨号失败',
-  // icon: 'none',
-  // });
-  // },
-  // });
-
+  // 客服电话不需要登录
   uni.showToast({
     title: '客服电话功能开发中',
     icon: 'none',
@@ -277,6 +283,7 @@ const callCustomerService = () => {
 
 // 打开在线客服
 const openOnlineService = () => {
+  // 在线客服不需要登录
   uni.showToast({
     title: '在线客服功能开发中',
     icon: 'none',
@@ -284,6 +291,7 @@ const openOnlineService = () => {
 };
 </script>
 
+<!-- 样式保持不变 -->
 <style lang="scss" scoped>
 .login-popup {
   padding: 30rpx 20rpx;

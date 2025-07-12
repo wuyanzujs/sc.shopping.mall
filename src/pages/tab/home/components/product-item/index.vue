@@ -2,13 +2,7 @@
   <view class="product-item" @click="handleClick">
     <!-- 商品图片容器 -->
     <view class="image-container">
-      <image
-        class="product-image"
-        :src="props.image"
-        mode="aspectFill"
-        :lazy-load="true"
-        @error="handleImageError"
-      />
+      <image class="product-image" :src="props.image" mode="aspectFill" :lazy-load="true" @error="handleImageError" />
       <!-- 商品标签 -->
       <view v-if="props.tag" class="product-tag">
         {{ props.tag }}
@@ -41,21 +35,6 @@
           ¥{{ formatPrice(props.originalPrice) }}
         </view>
       </view>
-
-      <!-- 销量和评分 -->
-      <!-- <view v-if="props.sales || props.rating" class="product-stats">
-        <text v-if="props.sales" class="sales">
-          已售{{ props.sales }}
-        </text>
-        <view v-if="props.rating" class="rating">
-          <text class="rating-stars">
-            ★
-          </text>
-          <text class="rating-value">
-            {{ props.rating }}
-          </text>
-        </view>
-      </view> -->
 
       <!-- 操作按钮 -->
       <view v-if="showActions" class="action-buttons">
@@ -95,8 +74,8 @@ const props = withDefaults(defineProps<ProductProps>(), {
 });
 
 const emit = defineEmits<{
-  click: [product: ProductProps];
-  addToCart: [product: ProductProps];
+  'click': [product: ProductProps];
+  'add-cart-cart': [product: ProductProps];
 }>();
 
 // 格式化价格
@@ -117,7 +96,7 @@ function handleClick() {
 
 // 处理加入购物车
 function handleAddToCart() {
-  emit('addToCart', props);
+  emit('add-cart-cart', props);
   uni.showToast({
     title: '已加入购物车',
     icon: 'success',
