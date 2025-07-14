@@ -105,15 +105,22 @@
       <div class="title center">
         隐私政策提示
       </div>
+      <button v-if="!allowChecked && !isSigned" class="phone-btn center" @click="isChecked">
+        手机号登录
+      </button>
       <button
-        v-if="allowChecked" class="phone-btn center" open-type="getPhoneNumber"
+        v-if="allowChecked && !isSigned" class="phone-btn center" open-type="getPhoneNumber"
         @getphonenumber="getPhoneNumber"
       >
         手机号登录
       </button>
-      <button v-else class="phone-btn center" @click="isChecked">
-        手机号登录
+      <button v-if="!allowChecked && isSigned" class="phone-btn center" @click="isChecked">
+        手机号快捷登录
       </button>
+      <button v-if="allowChecked && isSigned" class="phone-btn center" @click="getUserinfo">
+        手机号快捷登录
+      </button>
+
       <div class="checkbox">
         <up-checkbox
           v-model:checked="allowChecked" :custom-style="{ marginBottom: '8px' }" name="agree" used-alone
@@ -134,12 +141,13 @@
 import { useUserStore } from '@/store';
 
 const isOpenLoginPopup = ref(false);
+const isSigned = ref(false); // 是否已注册过
 const allowChecked = ref(false);
 const userStore = useUserStore();
 
 // 计算属性：是否已登录 - 直接访问 store 属性
 const isLoggedIn = computed(() => {
-  return !!userStore.openid && !!userStore.mobile;
+  return !!userStore.uuid && !!userStore.mobile;
 });
 
 const closeLoginForm = () => {
@@ -153,13 +161,16 @@ const closeLoginForm = () => {
 // 微信授权登录（获取openid）
 const wxLogin = async () => {
   try {
-    await userStore.authLogin();
+    const flag = await userStore.authLogin();
     // 获取openid后显示登录弹窗
-    isOpenLoginPopup.value = true;
-    // 关闭Tabbar
+    if (flag) {
+      isSigned.value = true;
+    }
     uni.hideTabBar({
       animation: false,
     });
+    isOpenLoginPopup.value = true;
+    // 关闭Tabbar
   }
   catch (error: any) {
     uni.showToast({
@@ -263,6 +274,17 @@ const getPhoneNumber = async (e: any) => {
   }
   finally {
     uni.hideLoading();
+  }
+};
+
+// 获取用户信息
+const getUserinfo = async () => {
+  await userStore.profile();
+  if (userStore.uuid) {
+    isOpenLoginPopup.value = false;
+    uni.showTabBar({
+      animation: true,
+    });
   }
 };
 

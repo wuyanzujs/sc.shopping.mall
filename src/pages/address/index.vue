@@ -1,21 +1,17 @@
 <template>
   <view class="address-page">
     <!-- 地址列表 -->
-    <view class="address-list">
-      <view
-        v-for="(item) in addressList"
-        :key="item.id"
-        class="address-item"
-      >
+    <view v-if="addressList.length > 0" class="address-list">
+      <view v-for="(item) in addressList" :key="item.uuid" class="address-item">
         <!-- 地址信息 -->
         <view class="address-header">
           <text class="receiver-name">
-            {{ item.receiverName }}
+            {{ item.area }}
           </text>
           <text class="phone">
-            {{ item.phone }}
+            {{ item.mobile }}
           </text>
-          <view v-if="item.isDefault" class="default-tag">
+          <view v-if="item.is_default" class="default-tag">
             <text class="tag-text">
               默认
             </text>
@@ -24,44 +20,40 @@
 
         <view class="address-detail">
           <text class="region">
-            {{ item.province }} {{ item.city }} {{ item.district }}
+            {{ item.detail_address }}
           </text>
         </view>
 
-        <view class="full-address">
+        <!-- <view class="full-address">
           <text class="address-text">
-            {{ item.detailAddress }}
+            {{ item.detail_address }}
           </text>
-        </view>
+        </view> -->
 
         <!-- 修改模板中的操作按钮区域 -->
         <view class="action-buttons">
           <view class="checkbox-area" @click="handleSetDefault(item)">
-            <view class="custom-checkbox" :class="{ checked: item.selected }">
-              <view v-if="item.selected" class="checkbox-inner">
+            <view class="custom-checkbox" :class="{ checked: item.is_default === 'Y' }">
+              <view v-if="item.is_default === 'Y'" class="checkbox-inner">
                 <text class="checkmark">
                   ✓
                 </text>
               </view>
             </view>
             <text class="set-default-text">
-              {{ item.isDefault ? '默认地址' : '设为默认' }}
+              {{ item.is_default === 'Y' ? '默认地址' : '设为默认' }}
             </text>
           </view>
 
           <view class="operation-btns">
             <u-button
-              type="default"
-              size="mini"
-              custom-style="margin-right: 10rpx; background: #ddd; color: #999;"
-              @click="deleteAddress(item)"
+              type="default" size="mini" custom-style="margin-right: 10rpx; background: #ddd; color: #999;"
+              @click="deleteAddress(item.uuid)"
             >
               删除
             </u-button>
             <u-button
-              type="default"
-              size="mini"
-              custom-style="background: #4F95FF; color: #fff;"
+              type="default" size="mini" custom-style="background: #4F95FF; color: #fff;"
               @click="editAddress(item)"
             >
               修改
@@ -69,6 +61,12 @@
           </view>
         </view>
       </view>
+    </view>
+
+    <view v-else class="h-full center">
+      <text>
+        暂无收货地址
+      </text>
     </view>
 
     <!-- 底部安全区域和新增按钮 -->
@@ -82,10 +80,7 @@
 
     <!-- 新增地址弹窗 -->
     <up-popup
-      :show="showAddPopup"
-      mode="bottom"
-      :border-radius="20"
-      :safe-area-inset-bottom="true"
+      :show="showAddPopup" mode="bottom" :border-radius="20" :safe-area-inset-bottom="true"
       @close="closeAddPopup"
     >
       <view class="add-address-popup">
@@ -93,12 +88,7 @@
           <text class="popup-title">
             {{ popupTitle }}
           </text>
-          <u-icon
-            name="close"
-            size="20"
-            color="#999"
-            @click="closeAddPopup"
-          />
+          <u-icon name="close" size="20" color="#999" @click="closeAddPopup" />
         </view>
 
         <view class="popup-content">
@@ -108,9 +98,7 @@
               收货人
             </text>
             <u-input
-              v-model="newAddress.receiverName"
-              placeholder="请输入收货人姓名"
-              border="none"
+              v-model="newAddress.name" placeholder="请输入收货人姓名" border="none"
               custom-style="background: #f8f8f8; border-radius: 8rpx; padding: 10rpx;"
             />
           </view>
@@ -120,26 +108,19 @@
               手机号码
             </text>
             <u-input
-              v-model="newAddress.phone"
-              placeholder="请输入手机号码"
-              type="number"
-              border="none"
+              v-model="newAddress.mobile" placeholder="请输入手机号码" type="number" border="none"
               custom-style="background: #f8f8f8; border-radius: 8rpx; padding: 10rpx;"
             />
           </view>
 
           <!-- 地区选择 -->
-          <view class="form-item">
+          <view class="form-item" @click="showRegionPicker">
             <text class="form-label">
               所在地区
             </text>
             <u-input
-              v-model="selectedRegion"
-              placeholder="请选择省市区"
-              border="none"
-              readonly
+              v-model="selectedRegion" placeholder="请选择省市区" border="none" readonly
               custom-style="background: #f8f8f8; border-radius: 8rpx; padding: 10rpx;"
-              @click="showRegionPicker"
             >
               <template #suffix>
                 <u-icon name="arrow-right" size="16" color="#999" />
@@ -152,11 +133,8 @@
               详细地址
             </text>
             <u-textarea
-              v-model="newAddress.detailAddress"
-              placeholder="请输入详细地址（街道、门牌号等）"
-              :auto-height="true"
-              :max-length="200"
-              custom-style="background: #f8f8f8; border-radius: 8rpx; padding: 20rpx;"
+              v-model="newAddress.detail_address" placeholder="请输入详细地址（街道、门牌号等）" :auto-height="true"
+              :max-length="200" custom-style="background: #f8f8f8; border-radius: 8rpx; padding: 20rpx;"
             />
           </view>
 
@@ -166,28 +144,19 @@
               <text class="form-label">
                 设为默认地址
               </text>
-              <u-switch
-                v-model="newAddress.isDefault"
-                active-color="#4F95FF"
-                size="24"
-              />
+              <u-switch v-model="isDefault" active-color="#4F95FF" size="24" />
             </view>
           </view>
         </view>
 
         <view class="popup-footer">
           <u-button
-            type="default"
-            custom-style="background: #f5f5f5; color: #666; margin-right: 20rpx;"
+            type="default" custom-style="background: #f5f5f5; color: #666; margin-right: 20rpx;"
             @click="closeAddPopup"
           >
             取消
           </u-button>
-          <u-button
-            type="primary"
-            custom-style="background: #4F95FF; border: none;"
-            @click="saveAddress"
-          >
+          <u-button type="primary" custom-style="background: #4F95FF; border: none;" @click="saveAddress">
             保存
           </u-button>
         </view>
@@ -195,124 +164,55 @@
     </up-popup>
 
     <u-picker
-      :show="showRegionSelector"
-      mode="region"
-      :default-region="defaultRegion"
-      @confirm="onRegionConfirm"
-      @cancel="showRegionSelector = false"
-      @close="showRegionSelector = false"
+      ref="uPickerRef" :show="showRegionSelector" mode="region" :columns="defaultRegion" @confirm="onRegionConfirm"
+      @change="onRegionChange"
+      @cancel="showRegionSelector = false" @close="showRegionSelector = false"
     />
   </view>
 </template>
 
 <script setup lang="ts">
+import type { ProvinceData } from '@/api/common/types';
+import type { AddressItem, AddUserAddressParams, UserAddress } from '@/api/user/types';
+import { CommonApi } from '@/api';
+import { useUserStore } from '@/store';
+import { getRegionByIndex, regionFilter } from '@/utils';
 import { computed, ref } from 'vue';
 
-interface AddressItem {
-  id: string;
-  receiverName: string;
-  phone: string;
-  province: string;
-  city: string;
-  district: string;
-  detailAddress: string;
-  isDefault: boolean;
-
-  selected: boolean;
-}
-
-interface NewAddressForm {
-  receiverName: string;
-  phone: string;
-  province: string;
-  city: string;
-  district: string;
-  detailAddress: string;
-  isDefault: boolean;
-
-}
-
-// 地址列表数据
-const addressList = ref<AddressItem[]>([
-  {
-    id: '1',
-    receiverName: '赵信',
-    phone: '15136805262',
-    province: '上海',
-    city: '闵行区',
-    district: '',
-    detailAddress: '塘泾南苑7号楼501',
-    isDefault: true,
-    selected: true,
-  },
-  {
-    id: '2',
-    receiverName: '赵信',
-    phone: '15136805262',
-    province: '上海',
-    city: '闵行区',
-    district: '',
-    detailAddress: '连谷新兴科技产业园1号楼11层',
-    isDefault: false,
-    selected: false,
-  },
-  {
-    id: '3',
-    receiverName: '赵鑫',
-    phone: '15136805262',
-    province: '河南',
-    city: '许昌市',
-    district: '建安区',
-    detailAddress: '步郑村',
-    isDefault: false,
-    selected: false,
-  },
-  {
-    id: '3',
-    receiverName: '赵鑫',
-    phone: '15136805262',
-    province: '河南',
-    city: '许昌市',
-    district: '建安区',
-    detailAddress: '步郑村',
-    isDefault: false,
-    selected: false,
-  },
-  {
-    id: '3',
-    receiverName: '赵鑫',
-    phone: '15136805262',
-    province: '河南',
-    city: '许昌市',
-    district: '建安区',
-    detailAddress: '步郑村',
-    isDefault: false,
-    selected: false,
-  },
-]);
+const userStore = useUserStore();
 
 // 新增地址弹窗相关
 const showAddPopup = ref(false);
 const showRegionSelector = ref(false);
 const selectedRegion = ref('');
-const defaultRegion = ref(['', '', '']);
+const defaultRegion = ref<string[][]>([]);
+const addressList = ref<UserAddress[]>([]);
+const regionList = ref<ProvinceData>();
 
+// 定义uview-plus u-picker的ref类型
+interface UPickerRef {
+  setColumnValues: (columnIndex: number, values: string[]) => void;
+}
+
+const uPickerRef = ref<UPickerRef | null>(null);
+const isDefault = ref(false);
 // 新增地址表单数据
-const newAddress = ref<NewAddressForm>({
-  receiverName: '',
-  phone: '',
-  province: '',
-  city: '',
-  district: '',
-  detailAddress: '',
-  isDefault: false,
+const newAddress = ref<AddUserAddressParams>({
+  acc_id: '',
+  area: '',
+  detail_address: '',
+  is_default: '',
+  mobile: '',
+  name: '',
 });
 
-// 复选框组数据
-const checkboxGroup = ref<string[]>([]);
+// 获取用户地址列表
+const getUserAddressList = async () => {
+  addressList.value = await userStore.getUserAddressList();
+};
 
-// 删除地址类型选项
-// const addressTypes = [...]
+// 复选框组数据
+// const checkboxGroup = ref<string[]>([]);
 
 // 显示新增地址弹窗
 const showAddAddressPopup = () => {
@@ -322,15 +222,37 @@ const showAddAddressPopup = () => {
 // 重置表单
 const resetForm = () => {
   newAddress.value = {
-    receiverName: '',
-    phone: '',
-    province: '',
-    city: '',
-    district: '',
-    detailAddress: '',
-    isDefault: false,
+    acc_id: '',
+    area: '',
+    detail_address: '',
+    is_default: '',
+    mobile: '',
+    name: '',
   };
   selectedRegion.value = '';
+};
+
+const _selectedRegion = ref<string[]>([]);
+
+// 地区选择确认
+const onRegionConfirm = () => {
+  selectedRegion.value = _selectedRegion.value.join(' ');
+  showRegionSelector.value = false;
+};
+
+const onRegionChange = (e: any) => {
+  const { columnIndex, value } = e;
+  console.log('onRegionChange', columnIndex, value);
+  _selectedRegion.value = value;
+  const { citylist, districtlist } = getRegionByIndex(regionList.value!, columnIndex, value);
+
+  if (columnIndex === 0 && citylist) {
+    uPickerRef.value?.setColumnValues(1, citylist);
+    uPickerRef.value?.setColumnValues(2, districtlist);
+  }
+  else if (columnIndex === 1 && districtlist) {
+    uPickerRef.value?.setColumnValues(2, districtlist);
+  }
 };
 
 // 显示地区选择器
@@ -338,17 +260,15 @@ const showRegionPicker = () => {
   showRegionSelector.value = true;
 };
 
-// 地区选择确认
-const onRegionConfirm = (e: any) => {
-  const { province, city, area } = e;
-  newAddress.value.province = province.name;
-  newAddress.value.city = city.name;
-  newAddress.value.district = area.name;
-  selectedRegion.value = `${province.name} ${city.name} ${area.name}`;
-  showRegionSelector.value = false;
-};
+onMounted(async () => {
+  const region = await CommonApi.getRegion();
+  const { province, firstCity = [], firstDistrict = [] } = regionFilter(region);
+  defaultRegion.value = [province, firstCity, firstDistrict];
+  regionList.value = region;
+  _selectedRegion.value = [province[0], firstCity[0], firstDistrict[0]];
+  getUserAddressList();
+});
 
-// 在script setup中添加编辑相关的状态变量
 const isEditMode = ref(false); // 是否为编辑模式
 const editingAddressId = ref(''); // 正在编辑的地址ID
 
@@ -363,111 +283,83 @@ const closeAddPopup = () => {
 };
 
 // 保存地址
-const saveAddress = () => {
+const saveAddress = async () => {
   // 表单验证
-  if (!newAddress.value.receiverName.trim()) {
+  if (!newAddress.value.name.trim()) {
     uni.showToast({ title: '请输入收货人姓名', icon: 'none' });
     return;
   }
-  if (!newAddress.value.phone.trim()) {
+  if (!newAddress.value.mobile.trim()) {
     uni.showToast({ title: '请输入手机号码', icon: 'none' });
     return;
   }
-  if (!/^1[3-9]\d{9}$/.test(newAddress.value.phone)) {
+  if (!/^1[3-9]\d{9}$/.test(newAddress.value.mobile)) {
     uni.showToast({ title: '请输入正确的手机号码', icon: 'none' });
     return;
   }
-  if (!newAddress.value.province || !newAddress.value.city) {
+  if (!selectedRegion.value.trim()) {
     uni.showToast({ title: '请选择所在地区', icon: 'none' });
     return;
   }
-  if (!newAddress.value.detailAddress.trim()) {
+  if (!newAddress.value.detail_address.trim()) {
     uni.showToast({ title: '请输入详细地址', icon: 'none' });
     return;
   }
 
-  // 如果设为默认地址，取消其他地址的默认状态
-  if (newAddress.value.isDefault) {
-    addressList.value.forEach((item) => {
-      if (item.id !== editingAddressId.value) {
-        item.isDefault = false;
-        item.selected = false;
-      }
-    });
-  }
-
   if (isEditMode.value) {
-    // 编辑模式：更新现有地址
-    const index = addressList.value.findIndex(item => item.id === editingAddressId.value);
-    if (index > -1) {
-      const updatedAddress: AddressItem = {
-        id: editingAddressId.value,
-        receiverName: newAddress.value.receiverName,
-        phone: newAddress.value.phone,
-        province: newAddress.value.province,
-        city: newAddress.value.city,
-        district: newAddress.value.district,
-        detailAddress: newAddress.value.detailAddress,
-        isDefault: newAddress.value.isDefault,
-        selected: newAddress.value.isDefault,
-      };
-
-      addressList.value[index] = updatedAddress;
-
-      // 更新复选框组状态
-      if (newAddress.value.isDefault) {
-        checkboxGroup.value = [editingAddressId.value];
-      }
-
-      uni.showToast({ title: '地址修改成功', icon: 'success' });
-    }
-  }
-  else {
-    // 新增模式：添加新地址
-    const newId = (addressList.value.length + 1).toString();
-
-    const addressItem: AddressItem = {
-      id: newId,
-      receiverName: newAddress.value.receiverName,
-      phone: newAddress.value.phone,
-      province: newAddress.value.province,
-      city: newAddress.value.city,
-      district: newAddress.value.district,
-      detailAddress: newAddress.value.detailAddress,
-      isDefault: newAddress.value.isDefault,
-      selected: newAddress.value.isDefault,
+    const updatedAddress: UserAddress = {
+      uuid: editingAddressId.value,
+      acc_id: userStore.uuid!,
+      name: newAddress.value.name,
+      mobile: newAddress.value.mobile,
+      area: newAddress.value.area,
+      detail_address: newAddress.value.detail_address,
+      is_default: newAddress.value.is_default,
     };
 
-    addressList.value.push(addressItem);
-
-    // 更新复选框组状态
-    if (newAddress.value.isDefault) {
-      checkboxGroup.value = [newId];
+    const res = await userStore.updateUserAddress(updatedAddress);
+    if (res.code !== 'OK') {
+      uni.showToast({ title: '地址修改失败', icon: 'none' });
+      return;
     }
+    // 更新列表
+    uni.showToast({ title: '地址修改成功', icon: 'success' });
+    await getUserAddressList();
+  }
+  else {
+    const addressItem: AddressItem = {
+      acc_id: userStore.uuid!,
+      area: selectedRegion.value.replace(' ', ''),
+      detail_address: newAddress.value.detail_address,
+      is_default: isDefault.value ? 'Y' : 'N',
+      mobile: newAddress.value.mobile,
+      name: newAddress.value.name,
+    };
 
-    uni.showToast({ title: '地址添加成功', icon: 'success' });
+    const res = await userStore.addUserAddress(addressItem);
+    if (res.code === 'OK') {
+      uni.showToast({ title: '地址添加成功', icon: 'success' });
+      getUserAddressList();
+    }
   }
 
   closeAddPopup();
 };
 
 // 删除地址
-const deleteAddress = (item: AddressItem) => {
+const deleteAddress = (uuid: string) => {
   uni.showModal({
     title: '确认删除',
     content: '确定要删除这个地址吗？',
-    success: (res) => {
+    success: async (res) => {
       if (res.confirm) {
-        const index = addressList.value.findIndex(addr => addr.id === item.id);
-        if (index > -1) {
-          addressList.value.splice(index, 1);
-          if (item.isDefault && addressList.value.length > 0) {
-            addressList.value[0].isDefault = true;
-            addressList.value[0].selected = true;
-            checkboxGroup.value = [addressList.value[0].id];
-          }
-          uni.showToast({ title: '删除成功', icon: 'success' });
+        const res = await userStore.deleteUserAddress(uuid);
+        if (res.code !== 'OK') {
+          uni.showToast({ title: '删除失败', icon: 'none' });
+          return;
         }
+        getUserAddressList();
+        uni.showToast({ title: '删除成功', icon: 'success' });
       }
     },
   });
@@ -479,53 +371,51 @@ const popupTitle = computed(() => {
 });
 
 // 修改编辑地址函数
-const editAddress = (item: AddressItem) => {
+const editAddress = (item: UserAddress) => {
   // 设置编辑模式
   isEditMode.value = true;
-  editingAddressId.value = item.id;
+  editingAddressId.value = item.uuid;
 
   // 填充表单数据
   newAddress.value = {
-    receiverName: item.receiverName,
-    phone: item.phone,
-    province: item.province,
-    city: item.city,
-    district: item.district,
-    detailAddress: item.detailAddress,
-    isDefault: item.isDefault,
+    acc_id: item.acc_id,
+    name: item.name,
+    mobile: item.mobile,
+    area: item.area,
+    detail_address: item.detail_address,
+    is_default: item.is_default,
   };
 
   // 设置地区显示文本
-  selectedRegion.value = `${item.province} ${item.city} ${item.district}`.trim();
+  selectedRegion.value = item.area;
 
   // 显示弹窗
   showAddPopup.value = true;
 };
 
 // 处理设为默认地址
-const handleSetDefault = (item: AddressItem) => {
-  if (item.isDefault) {
-    uni.showToast({ title: '当前已是默认地址', icon: 'none' });
+const handleSetDefault = async (item: UserAddress) => {
+  if (item.is_default === 'Y') {
+    uni.showToast({ title: '已是默认地址', icon: 'none' });
     return;
   }
 
-  // 取消其他地址的默认状态
-  addressList.value.forEach((addr) => {
-    addr.isDefault = false;
-    addr.selected = false;
-  });
+  const newAddress = {
+    ...item,
+    is_default: 'Y',
+  };
 
-  // 设置当前地址为默认
-  item.isDefault = true;
-  item.selected = true;
+  const res = await userStore.updateUserAddress(newAddress);
 
-  // 更新复选框组
-  checkboxGroup.value = [item.id];
-
+  if (res.code !== 'OK') {
+    uni.showToast({ title: '设置默认地址失败', icon: 'none' });
+    return;
+  }
   uni.showToast({ title: '已设为默认地址', icon: 'success' });
-};
 
-// 可以删除原来的 toggleDefault 函数，因为已经被 handleSetDefault 替代
+  // 更新列表
+  await getUserAddressList();
+};
 </script>
 
 <style lang="scss" scoped>

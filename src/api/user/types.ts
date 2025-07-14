@@ -99,3 +99,47 @@ export interface SignUpRes {
   unionid: string;
   uuid: string;
 }
+
+export interface UserAddress {
+/**
+ * 地区，例如：云南省 丽江市 古城区
+ */
+  area: string;
+  /**
+   * 详细地址，例如：雪山路412号
+   */
+  detail_address: string;
+  /**
+   * 默认，是否设置为默认地址，Y则是，N或“”则否
+   */
+  is_default: string;
+  /**
+   * 手机号
+   */
+  mobile: string;
+  /**
+   * 姓名
+   */
+  name: string;
+}
+
+export interface AddUserAddressParams extends AddressItem {
+  /**
+   * 账户id
+   */
+  acc_id: string;
+}
+
+export interface AddressItem {
+  acc_id: string;
+  area: string;
+  detail_address: string;
+  is_default: string;
+  mobile: string;
+  name: string;
+}
+
+export interface UserAddress extends AddressItem {
+  uuid: string;
+  acc_id: string;
+}
