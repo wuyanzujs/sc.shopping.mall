@@ -8,9 +8,6 @@
           <text class="receiver-name">
             {{ item.area }}
           </text>
-          <text class="phone">
-            {{ item.mobile }}
-          </text>
           <view v-if="item.is_default" class="default-tag">
             <text class="tag-text">
               默认
@@ -24,22 +21,22 @@
           </text>
         </view>
 
-        <!-- <view class="full-address">
+        <view class="full-address">
           <text class="address-text">
-            {{ item.detail_address }}
+            {{ item.name }}
           </text>
-        </view> -->
+          <text class="phone">
+            {{ item.mobile }}
+          </text>
+        </view>
 
         <!-- 修改模板中的操作按钮区域 -->
         <view class="action-buttons">
           <view class="checkbox-area" @click="handleSetDefault(item)">
-            <view class="custom-checkbox" :class="{ checked: item.is_default === 'Y' }">
-              <view v-if="item.is_default === 'Y'" class="checkbox-inner">
-                <text class="checkmark">
-                  ✓
-                </text>
-              </view>
-            </view>
+            <Checkbox
+              :model-value="item.is_default === 'Y'"
+              :checked="item.is_default"
+            />
             <text class="set-default-text">
               {{ item.is_default === 'Y' ? '默认地址' : '设为默认' }}
             </text>
@@ -175,6 +172,7 @@
 import type { ProvinceData } from '@/api/common/types';
 import type { AddressItem, AddUserAddressParams, UserAddress } from '@/api/user/types';
 import { CommonApi } from '@/api';
+import Checkbox from '@/components/checkbox/index.vue';
 import { useUserStore } from '@/store';
 import { getRegionByIndex, regionFilter } from '@/utils';
 import { computed, ref } from 'vue';
@@ -312,9 +310,9 @@ const saveAddress = async () => {
       acc_id: userStore.uuid!,
       name: newAddress.value.name,
       mobile: newAddress.value.mobile,
-      area: newAddress.value.area,
+      area: selectedRegion.value.replaceAll(' ', ''),
       detail_address: newAddress.value.detail_address,
-      is_default: newAddress.value.is_default,
+      is_default: isDefault.value ? 'Y' : 'N',
     };
 
     const res = await userStore.updateUserAddress(updatedAddress);
@@ -329,7 +327,7 @@ const saveAddress = async () => {
   else {
     const addressItem: AddressItem = {
       acc_id: userStore.uuid!,
-      area: selectedRegion.value.replace(' ', ''),
+      area: selectedRegion.value.replaceAll(' ', ''),
       detail_address: newAddress.value.detail_address,
       is_default: isDefault.value ? 'Y' : 'N',
       mobile: newAddress.value.mobile,
@@ -490,15 +488,15 @@ const handleSetDefault = async (item: UserAddress) => {
 
 .full-address {
   display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
+  align-items: center;
+  gap: 40rpx;
+  // justify-content: space-between;
 }
 
 .address-text {
-  font-size: 28rpx;
+  font-size: 32rpx;
   color: #333;
   line-height: 1.5;
-  flex: 1;
 }
 
 .action-buttons {
