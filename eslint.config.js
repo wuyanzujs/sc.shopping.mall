@@ -58,6 +58,7 @@ export default antfu(
       }],
       // if 语句后需要换行
       'antfu/if-newline': 'off',
+      'ts/no-use-before-define': 'off',
     },
   },
 );

@@ -11,7 +11,9 @@
     {
       "path": "pages/tab/home/index",
       "style": {
-        "navigationBarTitleText": "首页"
+        "navigationBarTitleText": "首页",
+        // 触底加载
+        "onReachBottomDistance": 150
       }
     },
     {
@@ -29,19 +31,43 @@
     {
       "path": "pages/tab/cart/index",
       "style": {
-        "navigationBarTitleText": "购物车"
+        "navigationBarTitleText": "购物车",
+        // 触底加载
+        "onReachBottomDistance": 150
       }
     },
     {
       "path": "pages/product/detail/index",
       "style": {
-        "navigationBarTitleText": "商品详情",
+        "navigationBarTitleText": "商品详情"
       }
     },
     {
       "path": "pages/address/index",
       "style": {
-        "navigationBarTitleText": "收货地址",
+        "navigationBarTitleText": "收货地址"
+      }
+    },
+    {
+      "path": "pages/order/index",
+      "style": {
+        "navigationBarTitleText": "订单列表",
+        // 触底加载
+        "onReachBottomDistance": 150
+      }
+    },
+    {
+      "path": "pages/confirm/index",
+      "style": {
+        "navigationBarTitleText": "订单确认"
+      }
+    },
+    {
+      "path": "pages/pendding/index",
+      "style": {
+        "navigationBarTitleText": "待支付",
+        // 触底加载
+        "onReachBottomDistance": 150
       }
     }
   ],

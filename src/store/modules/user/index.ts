@@ -78,7 +78,7 @@ const useUserStore = defineStore('user', {
 
     // 获取用户地址列表
     async getUserAddressList() {
-      return await UserApi.getAddressList({ acc_id: this.uuid! });
+      return await UserApi.getAddressList({ acc_id: this.uuid });
     },
 
     // 添加用户地址

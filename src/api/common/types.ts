@@ -39,3 +39,48 @@ export interface DistrictItem {
 
 // 省市区数据类型
 export type ProvinceData = ProvinceItem[];
+
+// 基础分页查询参数
+export interface PaginationQuery {
+  /**
+   * 页码，从1开始
+   */
+  page: number;
+  /**
+   * 每页条数
+   */
+  size: number;
+}
+
+// 分页响应数据
+export interface PaginatedData<T> extends PaginationQuery {
+  rows: T[];
+  total: number;
+}
+
+// 标准API响应格式
+export interface ApiResult<T = any> {
+  code: number;
+  data: T;
+  message: string;
+}
+
+// 基础实体字段
+export interface BaseEntity {
+  id: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// 商品基础信息
+export interface ProductInfo {
+  productId: string;
+  productName: string;
+  price: number;
+  quantity: number; // 库存数量
+}
+
+// 用户基础信息
+export interface UserInfo {
+  userId: string;
+}

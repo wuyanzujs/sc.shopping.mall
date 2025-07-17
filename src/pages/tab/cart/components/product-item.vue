@@ -1,92 +1,141 @@
 <template>
   <view class="cart-item">
     <view class="item-checkbox">
-      <!-- <up-checkbox
-        :model-value="item.selected"
-        shape="circle"
-        active-color="#21d59d"
-        @change="handleSelectChange"
-      /> -->
-      <Checkbox
-        :model-value="item.selected"
-        @change="handleSelectChange"
-      />
+      <Checkbox :model-value="item.selected === 1" @change="handleSelectChange" />
     </view>
 
     <view class="item-image">
-      <up-image :src="item.image" width="160rpx" height="160rpx" border-radius="8rpx" />
+      <up-image
+        :src="item.productImage[0]" width="160rpx" height="160rpx" border-radius="8rpx"
+        @click="handleImageClick"
+      />
     </view>
 
     <view class="item-content">
-      <view class="item-title">
-        {{ item.title }}
+      <view class="item-title" @click="handleTitleClick">
+        {{ item.productName }}
       </view>
+
       <view v-if="item.specs" class="item-specs">
         <text class="spec-text">
-          {{ item.specs }}
+          {{ formatSpecs(item.specs) }}
         </text>
       </view>
+
       <view class="item-bottom">
         <view class="item-price">
           <text class="price-symbol">
             ¥
           </text>
           <text class="price-value">
-            {{ item.price.toFixed(2) }}
+            {{ item.price_new.toFixed(2) }}
           </text>
+          <!-- <text v-if="item.originalPrice && item.originalPrice > item.price_new" class="original-price">
+            ¥{{ item.originalPrice.toFixed(2) }}
+          </text> -->
         </view>
+
         <view class="quantity-control">
-          <view
-            class="quantity-btn"
-            :class="{ disabled: item.quantity <= 1 }"
-            @click="handleDecrease"
-          >
-            <up-icon
-              name="minus"
-              size="14"
-              :color="item.quantity <= 1 ? '#ccc' : '#666'"
+          <view class="quantity-btn" :class="{ disabled: item.quantity <= 1 }" @click="handleDecrease">
+            <up-icon name="minus" size="14" :color="item.quantity <= 1 ? '#ccc' : '#666'" />
+          </view>
+
+          <view class="quantity-input">
+            <input
+              class="quantity-text" type="number" :value="`${item.quantity}`" @blur="handleQuantityInput"
+              @confirm="handleQuantityInput"
             />
           </view>
-          <view class="quantity-input">
-            <text class="quantity-text">
-              {{ item.quantity }}
-            </text>
-          </view>
-          <view class="quantity-btn" @click="handleIncrease">
-            <up-icon name="plus" size="14" color="#666" />
+
+          <view class="quantity-btn" :class="{ disabled: item.quantity >= item.stock }" @click="handleIncrease">
+            <up-icon name="plus" size="14" :color="item.quantity >= item.stock ? '#ccc' : '#666'" />
           </view>
         </view>
+      </view>
+
+      <!-- 库存提示 -->
+      <view v-if="item.stock <= 10" class="stock-warning">
+        <text class="stock-text">
+          仅剩{{ item.stock }}件
+        </text>
       </view>
     </view>
   </view>
 </template>
 
-<script setup>
+<script setup lang="ts">
+import type { CartItem } from '@/api/cart/types';
 import Checkbox from '@/components/checkbox/index.vue';
-// 获取 props
-const props = defineProps({
-  item: {
-    type: Object,
-    required: true,
-  },
-});
 
-const emit = defineEmits(['select-change', 'quantity-decrease', 'quantity-increase']);
-
-function handleSelectChange(value) {
-  emit('select-change', value);
+interface Props {
+  item: CartItem;
 }
 
-function handleDecrease() {
-  if (props.item.quantity <= 1) {
+const props = defineProps<Props>();
+const emit = defineEmits(['select-change', 'quantity-decrease', 'quantity-increase', 'quantity-input']);
+
+// 格式化规格
+const formatSpecs = (specs: Record<string, string> | undefined) => {
+  if (!specs) return '';
+  return Object.values(specs).join(' ');
+};
+
+// 处理选中状态变化
+const handleSelectChange = (value: boolean) => {
+  emit('select-change', value);
+};
+
+// 处理减少数量
+const handleDecrease = () => {
+  if (props.item.quantity <= 1) return;
+  emit('quantity-decrease');
+};
+
+// 处理增加数量
+const handleIncrease = () => {
+  if (props.item.quantity >= props.item.stock) {
+    uni.showToast({
+      title: '库存不足',
+      icon: 'none',
+    });
     return;
   }
-  emit('quantity-decrease');
-}
-
-function handleIncrease() {
   emit('quantity-increase');
-}
+};
+
+// 处理数量输入
+const handleQuantityInput = (e: any) => {
+  const value = Number.parseInt(e.detail.value || e.target.value);
+  if (Number.isNaN(value) || value < 1) {
+    uni.showToast({
+      title: '请输入有效数量',
+      icon: 'none',
+    });
+    return;
+  }
+  if (value > props.item.stock) {
+    uni.showToast({
+      title: '库存不足',
+      icon: 'none',
+    });
+    return;
+  }
+  emit('quantity-input', value);
+};
+
+// 处理图片点击
+const handleImageClick = () => {
+  uni.navigateTo({
+    url: `/pages/product/detail/index?id=${props.item.productId || props.item.id}`,
+  });
+};
+
+// 处理标题点击
+const handleTitleClick = () => {
+  uni.navigateTo({
+    url: `/pages/product/detail/index?id=${props.item.productId || props.item.id}`,
+  });
+};
 </script>
 
 <style scoped lang="scss">
@@ -96,6 +145,10 @@ function handleIncrease() {
   display: flex;
   align-items: flex-start;
   border-bottom: 1rpx solid #f0f0f0;
+  position: relative;
+  margin-bottom: 20rpx;
+  border-radius: 10rpx;
+  box-shadow: 0 0 10rpx rgba(0, 0, 0, 0.1);
 
   .item-checkbox {
     margin-right: 20rpx;
@@ -114,6 +167,10 @@ function handleIncrease() {
       color: #333;
       line-height: 1.4;
       margin-bottom: 10rpx;
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+      overflow: hidden;
     }
 
     .item-specs {
@@ -132,10 +189,12 @@ function handleIncrease() {
       display: flex;
       align-items: center;
       justify-content: space-between;
+      margin-bottom: 10rpx;
 
       .item-price {
         display: flex;
         align-items: baseline;
+        gap: 10rpx;
 
         .price-symbol {
           font-size: 24rpx;
@@ -146,6 +205,12 @@ function handleIncrease() {
           font-size: 32rpx;
           font-weight: 600;
           color: #ff4757;
+        }
+
+        .original-price {
+          font-size: 24rpx;
+          color: #999;
+          text-decoration: line-through;
         }
       }
 
@@ -196,8 +261,23 @@ function handleIncrease() {
           .quantity-text {
             font-size: 28rpx;
             color: #333;
+            text-align: center;
+            border: none;
+            outline: none;
+            width: 100%;
+            height: 100%;
           }
         }
+      }
+    }
+
+    .stock-warning {
+      .stock-text {
+        font-size: 22rpx;
+        color: #ff4757;
+        background-color: #fff2f2;
+        padding: 4rpx 8rpx;
+        border-radius: 4rpx;
       }
     }
   }

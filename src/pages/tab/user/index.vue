@@ -203,6 +203,47 @@ const goToSettings = () => {
   });
 };
 
+// 跳转到订单列表
+const goToOrderList = () => {
+  uni.navigateTo({
+    url: '/pages/order/index',
+  });
+};
+
+// 待支付
+const goToPending = () => {
+  uni.navigateTo({
+    url: '/pages/pendding/index',
+  });
+};
+
+// 跳转到待发货
+const goToShipping = () => {
+  // 待开发
+  uni.showToast({
+    title: '功能开发中',
+    icon: 'none',
+  });
+};
+
+// 跳转到待收货
+const goToReceived = () => {
+  // 待开发
+  uni.showToast({
+    title: '功能开发中',
+    icon: 'none',
+  });
+};
+
+// 跳转到待退款
+const goToRefund = () => {
+  // 待开发
+  uni.showToast({
+    title: '功能开发中',
+    icon: 'none',
+  });
+};
+
 // 检查登录状态并导航或弹出登录窗
 const checkLoginAndNavigate = async (action: string) => {
   if (!isLoggedIn.value) {
@@ -220,14 +261,19 @@ const checkLoginAndNavigate = async (action: string) => {
       goToSettings();
       break;
     case 'order-pending':
+      goToPending();
+      break;
     case 'order-shipped':
+      goToShipping();
+      break;
     case 'order-received':
+      goToReceived();
+      break;
     case 'order-refund':
+      goToRefund();
+      break;
     case 'order-list':
-      uni.showToast({
-        title: '订单功能开发中',
-        icon: 'none',
-      });
+      goToOrderList();
       break;
     default:
       console.log('未知操作:', action);

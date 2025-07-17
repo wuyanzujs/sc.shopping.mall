@@ -37,13 +37,13 @@
       </view>
 
       <!-- 操作按钮 -->
-      <view v-if="showActions" class="action-buttons">
+      <!-- <view v-if="showActions" class="action-buttons">
         <view class="add-cart-btn" @click.stop="handleAddToCart">
           <text class="btn-text">
             加购物车
           </text>
         </view>
-      </view>
+      </view> -->
     </view>
   </view>
 </template>
@@ -57,7 +57,6 @@ interface ProductProps {
   description?: string;
   tag?: string;
   sales?: number;
-  rating?: number;
   showActions?: boolean;
 }
 
@@ -69,13 +68,11 @@ const props = withDefaults(defineProps<ProductProps>(), {
   description: '',
   tag: '',
   sales: 0,
-  rating: 0,
   showActions: true,
 });
 
 const emit = defineEmits<{
-  'click': [product: ProductProps];
-  'add-cart-cart': [product: ProductProps];
+  click: [product: ProductProps];
 }>();
 
 // 格式化价格
@@ -94,15 +91,15 @@ function handleClick() {
   emit('click', props);
 }
 
-// 处理加入购物车
-function handleAddToCart() {
-  emit('add-cart-cart', props);
-  uni.showToast({
-    title: '已加入购物车',
-    icon: 'success',
-    duration: 1500,
-  });
-}
+// // 处理加入购物车
+// function handleAddToCart() {
+//   emit('add-to-cart', props);
+//   // uni.showToast({
+//   //   title: '已加入购物车',
+//   //   icon: 'success',
+//   //   duration: 1500,
+//   // });
+// }
 </script>
 
 <style scoped lang='scss'>
@@ -234,8 +231,8 @@ function handleAddToCart() {
   .add-cart-btn {
     width: 100%;
     height: 64rpx;
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    border-radius: 32rpx;
+    background-image: linear-gradient(135deg, #3fa5ec 30%, #4F95FF 100%);
+    border-radius: 16rpx;
     display: flex;
     align-items: center;
     justify-content: center;

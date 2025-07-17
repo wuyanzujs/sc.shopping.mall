@@ -141,7 +141,7 @@ function handleProductClick(product: Product) {
 
     &.active {
       background-color: #f5f5f5;
-      color: #ff4757;
+      color: #4F95FF;
       font-weight: 500;
 
       &::before {
@@ -152,7 +152,7 @@ function handleProductClick(product: Product) {
         transform: translateY(-50%);
         width: 6rpx;
         height: 40rpx;
-        background-color: #ff4757;
+        background-color: #4F95FF;
         border-radius: 0 6rpx 6rpx 0;
       }
     }

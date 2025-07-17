@@ -19,16 +19,6 @@
           />
         </swiper-item>
       </swiper>
-
-      <!-- 收藏按钮 -->
-      <view class="favorite-btn" @click="toggleFavorite">
-        <text class="iconfont" :class="isFavorite ? 'icon-heart-fill' : 'icon-heart'" />
-      </view>
-
-      <!-- 分享按钮 -->
-      <view class="share-btn" @click="shareProduct">
-        <text class="iconfont icon-share" />
-      </view>
     </view>
 
     <!-- 商品基本信息 -->
@@ -39,58 +29,28 @@
             ¥
           </text>
           <text class="price-value">
-            {{ formatPrice(selectedSku.price || product.price) }}
+            {{ formatPrice(selectedSku.price || product.price_new) }}
           </text>
         </view>
-        <view v-if="product.originalPrice && product.originalPrice > product.price" class="original-price">
-          ¥{{ formatPrice(product.originalPrice) }}
-        </view>
-        <view v-if="product.tag" class="product-tag">
-          {{ product.tag }}
+        <view v-if="product.price_old && product.price_old > product.price_new" class="original-price">
+          ¥{{ formatPrice(product.price_old) }}
         </view>
       </view>
 
       <view class="title-section">
         <text class="product-title">
-          {{ product.title }}
+          {{ product.name }}
         </text>
         <text class="product-subtitle">
-          {{ product.subtitle }}
+          {{ product.description }}
         </text>
-      </view>
-
-      <view class="stats-section">
-        <view class="stat-item">
-          <text class="stat-label">
-            销量
-          </text>
-          <text class="stat-value">
-            {{ product.sales }}
-          </text>
-        </view>
-        <view class="stat-item">
-          <text class="stat-label">
-            评分
-          </text>
-          <text class="stat-value">
-            {{ product.rating }} ★
-          </text>
-        </view>
-        <view class="stat-item">
-          <text class="stat-label">
-            库存
-          </text>
-          <text class="stat-value">
-            {{ selectedSku.stock || product.stock }}
-          </text>
-        </view>
       </view>
     </view>
 
     <!-- 规格选择 -->
-    <view class="spec-section">
+    <!-- <view v-if="product.specs && product.specs.length > 0" class="spec-section">
       <view v-for="spec in product.specs" :key="spec.name" class="spec-group">
-        <text class="spec-title">
+        <text class="spec-name">
           {{ spec.name }}
         </text>
         <view class="spec-options">
@@ -105,10 +65,35 @@
           </view>
         </view>
       </view>
+    </view> -->
+
+    <!-- 数量选择区域 -->
+    <view class="quantity-section">
+      <text class="quantity-label">
+        数量
+      </text>
+      <view class="quantity-controls">
+        <view class="quantity-btn" :class="{ disabled: quantity <= 1 }" @click="decreaseQuantity">
+          -
+        </view>
+        <input
+          v-model="quantity"
+          class="quantity-input"
+          type="number"
+          :max="product.stock"
+          min="1"
+        />
+        <view class="quantity-btn" :class="{ disabled: quantity >= product.stock }" @click="increaseQuantity">
+          +
+        </view>
+      </view>
+      <text class="stock-info">
+        库存{{ product.stock }}件
+      </text>
     </view>
 
     <!-- 服务保障 -->
-    <view class="service-section">
+    <!-- <view class="service-section">
       <view class="service-title">
         服务保障
       </view>
@@ -120,7 +105,7 @@
           </text>
         </view>
       </view>
-    </view>
+    </view> -->
 
     <!-- 商品详情 -->
     <view class="detail-section">
@@ -142,17 +127,17 @@
         </view>
 
         <view v-if="activeTab === 'params'" class="params-content">
-          <view v-for="param in product.params" :key="param.name" class="param-item">
+          <view v-for="param in product.specs" :key="param" class="param-item">
             <text class="param-name">
-              {{ param.name }}
+              {{ param }}
             </text>
             <text class="param-value">
-              {{ param.value }}
+              {{ param }}
             </text>
           </view>
         </view>
 
-        <view v-if="activeTab === 'reviews'" class="reviews-content">
+        <!-- <view v-if="activeTab === 'reviews'" class="reviews-content">
           <view v-for="review in product.reviews" :key="review.id" class="review-item">
             <view class="review-header">
               <image class="reviewer-avatar" :src="review.avatar" />
@@ -183,95 +168,63 @@
               />
             </view>
           </view>
-        </view>
+        </view> -->
       </view>
     </view>
 
     <!-- 底部操作栏 -->
-    <view class="bottom-actions">
-      <view class="action-left">
-        <view class="action-btn" @click="contactService">
-          <text class="iconfont icon-service" />
-          <text class="action-text">
-            客服
-          </text>
-        </view>
-        <view class="action-btn" @click="goToCart">
-          <text class="iconfont icon-cart" />
-          <text class="action-text">
-            购物车
-          </text>
-          <view v-if="cartCount > 0" class="cart-badge">
-            {{ cartCount }}
-          </view>
-        </view>
-      </view>
-
+    <view class="action-bar">
       <view class="action-right">
-        <view class="add-cart-btn" @click="addToCart">
-          加入购物车
+        <view class="add-to-cart-btn" @click="addToCart">
+          <image class="icon" src="/src/static/images/icon-add-cart.png" alt="" />
         </view>
-        <view class="buy-now-btn" @click="buyNow">
-          立即购买
+        <view class="buy-now-btn">
+          去购买
         </view>
       </view>
+    </view>
+
+    <!-- 加载状态 -->
+    <view v-if="loading" class="loading-overlay">
+      <text>加载中...</text>
     </view>
   </view>
 </template>
 
 <script setup lang="ts">
-interface ProductSku {
-  id: string;
-  price: number;
-  stock: number;
-  specs: Record<string, string>;
-}
-
-interface ProductSpec {
-  name: string;
-  options: Array<{
-    label: string;
-    value: string;
-    disabled?: boolean;
-  }>;
-}
-
-interface ProductDetail {
-  id: string;
-  title: string;
-  subtitle?: string;
-  price: number;
-  originalPrice?: number;
-  tag?: string;
-  images: string[];
-  sales: number;
-  rating: number;
-  stock: number;
-  specs: ProductSpec[];
-  skus: ProductSku[];
-  services: string[];
-  description: string;
-  params: Array<{ name: string; value: string }>;
-  reviews: Array<{
-    id: string;
-    name: string;
-    avatar: string;
-    rating: number;
-    content: string;
-    date: string;
-    images?: string[];
-  }>;
-}
-
-// 获取路由参数
-const route = getCurrentPages()[getCurrentPages().length - 1];
-const productId = route.options?.id || '1';
+import type { Product } from '@/api/product/types';
+import { getProductListOrItemApi } from '@/api/product';
+import { useCartStore, useUserStore } from '@/store';
 
 // 响应式数据
-const isFavorite = ref(false);
+const productId = ref('');
+const loading = ref(false);
 const selectedSpecs = ref<Record<string, string>>({});
 const activeTab = ref('description');
-const cartCount = ref(3);
+const quantity = ref(1);
+
+// 获取store实例
+const userStore = useUserStore();
+const cartStore = useCartStore();
+
+// 商品详情数据 - 使用API定义的Product类型
+const product = ref<Product>({
+  uuid: '',
+  name: '',
+  price_new: 0,
+  price_old: 0,
+  description: '',
+  specs: '',
+  stock: 0,
+  images: [],
+  create_tm: '',
+  update_tm: null,
+  category: null,
+  deleted: false,
+  type: 0,
+  type_id: '',
+  agent_id: '',
+});
 
 // 详情页标签
 const detailTabs = [
@@ -280,93 +233,54 @@ const detailTabs = [
   { key: 'reviews', label: '用户评价' },
 ];
 
-// 模拟商品数据
-const product = ref<ProductDetail>({
-  id: productId,
-  title: 'iPhone 15 Pro Max 256GB',
-  subtitle: '钛金属设计 | A17 Pro芯片 | 专业级摄像系统',
-  price: 9999.00,
-  originalPrice: 10999.00,
-  tag: '热销',
-  images: [
-    'https://fastly.picsum.photos/id/459/600/600.jpg?hmac=test1',
-    'https://fastly.picsum.photos/id/570/600/600.jpg?hmac=test2',
-    'https://fastly.picsum.photos/id/180/600/600.jpg?hmac=test3',
-    'https://fastly.picsum.photos/id/292/600/600.jpg?hmac=test4',
-  ],
-  sales: 1580,
-  rating: 4.8,
-  stock: 99,
-  specs: [
-    {
-      name: '颜色',
-      options: [
-        { label: '原色钛金属', value: 'natural' },
-        { label: '蓝色钛金属', value: 'blue' },
-        { label: '白色钛金属', value: 'white' },
-        { label: '黑色钛金属', value: 'black' },
-      ],
-    },
-    {
-      name: '容量',
-      options: [
-        { label: '128GB', value: '128gb' },
-        { label: '256GB', value: '256gb' },
-        { label: '512GB', value: '512gb' },
-        { label: '1TB', value: '1tb' },
-      ],
-    },
-  ],
-  skus: [
-    { id: '1', price: 8999, stock: 50, specs: { 颜色: 'natural', 容量: '128gb' } },
-    { id: '2', price: 9999, stock: 30, specs: { 颜色: 'natural', 容量: '256gb' } },
-    { id: '3', price: 11999, stock: 20, specs: { 颜色: 'natural', 容量: '512gb' } },
-    { id: '4', price: 13999, stock: 10, specs: { 颜色: 'natural', 容量: '1tb' } },
-  ],
-  services: [
-    '7天无理由退货',
-    '15天免费换货',
-    '全国联保',
-    '免费配送',
-    '正品保证',
-  ],
-  description: '<p>iPhone 15 Pro Max 采用钛金属设计，搭载 A17 Pro 芯片...</p>',
-  params: [
-    { name: '品牌', value: 'Apple' },
-    { name: '型号', value: 'iPhone 15 Pro Max' },
-    { name: '屏幕尺寸', value: '6.7英寸' },
-    { name: '操作系统', value: 'iOS 17' },
-    { name: '处理器', value: 'A17 Pro' },
-    { name: '机身材质', value: '钛金属' },
-  ],
-  reviews: [
-    {
-      id: '1',
-      name: '张***',
-      avatar: 'https://fastly.picsum.photos/id/64/50/50.jpg',
-      rating: 5,
-      content: '手机很不错，钛金属质感很好，拍照效果也很棒！',
-      date: '2024-01-15',
-      images: ['https://fastly.picsum.photos/id/100/200/200.jpg'],
-    },
-    {
-      id: '2',
-      name: '李***',
-      avatar: 'https://fastly.picsum.photos/id/65/50/50.jpg',
-      rating: 4,
-      content: '性能很强，就是价格有点贵，不过物有所值。',
-      date: '2024-01-10',
-    },
-  ],
+// 获取商品详情
+async function getProductDetail(id: string) {
+  if (!id) return;
+
+  loading.value = true;
+  try {
+    const res = await getProductListOrItemApi({ categoryId: id });
+
+    if (res.rows && res.rows.length > 0) {
+      const productData = res.rows[0];
+      // 直接使用API返回的数据结构
+      product.value = productData;
+    }
+    else {
+      uni.showToast({
+        title: '商品不存在',
+        icon: 'none',
+      });
+    }
+  }
+  catch (error) {
+    console.error('获取商品详情失败:', error);
+    uni.showToast({
+      title: '获取商品详情失败',
+      icon: 'none',
+    });
+  }
+  finally {
+    loading.value = false;
+  }
+}
+
+// 页面加载时获取商品详情
+onLoad((options: any) => {
+  console.log('options', options.id);
+  productId.value = options.id || '';
+
+  if (productId.value) {
+    getProductDetail(productId.value);
+  }
 });
 
 // 计算当前选中的SKU
 const selectedSku = computed(() => {
-  return product.value.skus.find((sku) => {
-    return Object.keys(selectedSpecs.value).every(key =>
-      sku.specs[key] === selectedSpecs.value[key],
-    );
-  }) || { price: product.value.price, stock: product.value.stock };
+  return {
+    price: product.value.price_new,
+    stock: product.value.stock,
+  };
 });
 
 // 格式化价格
@@ -374,107 +288,78 @@ function formatPrice(price: number): string {
   return price.toFixed(2);
 }
 
-// 格式化日期
-function formatDate(date: string): string {
-  return new Date(date).toLocaleDateString();
-}
-
-// 选择规格
-function selectSpec(specName: string, value: string) {
-  selectedSpecs.value[specName] = value;
-}
-
 // 预览图片
 function previewImage(index: number) {
-  uni.previewImage({
-    urls: product.value.images,
-    current: index,
-  });
+  if (product.value.images && product.value.images.length > 0) {
+    uni.previewImage({
+      urls: product.value.images,
+      current: index,
+    });
+  }
 }
 
-// 预览评价图片
-function previewReviewImage(images: string[], current: string) {
-  uni.previewImage({
-    urls: images,
-    current,
-  });
+// 增加数量
+function increaseQuantity() {
+  if (quantity.value < product.value.stock) {
+    quantity.value++;
+  }
+  else {
+    uni.showToast({
+      title: '库存不足',
+      icon: 'none',
+    });
+  }
 }
 
-// 切换收藏
-function toggleFavorite() {
-  isFavorite.value = !isFavorite.value;
-  uni.showToast({
-    title: isFavorite.value ? '已收藏' : '已取消收藏',
-    icon: 'none',
-  });
-}
-
-// 分享商品
-function shareProduct() {
-  uni.share({
-    provider: 'weixin',
-    type: 0,
-    title: product.value.title,
-    summary: product.value.subtitle,
-    imageUrl: product.value.images[0],
-  });
-}
-
-// 联系客服
-function contactService() {
-  uni.showToast({
-    title: '正在连接客服...',
-    icon: 'loading',
-  });
-}
-
-// 跳转购物车
-function goToCart() {
-  uni.navigateTo({
-    url: '/pages/cart/index',
-  });
+// 减少数量
+function decreaseQuantity() {
+  if (quantity.value > 1) {
+    quantity.value--;
+  }
 }
 
 // 加入购物车
-function addToCart() {
-  if (Object.keys(selectedSpecs.value).length < product.value.specs.length) {
+async function addToCart() {
+  if (!userStore.uuid && !userStore.user_id) {
     uni.showToast({
-      title: '请选择完整规格',
+      title: '请先登录',
       icon: 'none',
     });
     return;
   }
 
-  cartCount.value++;
-  uni.showToast({
-    title: '已加入购物车',
-    icon: 'success',
-  });
-}
-
-// 立即购买
-function buyNow() {
-  if (Object.keys(selectedSpecs.value).length < product.value.specs.length) {
+  if (quantity.value > product.value.stock) {
     uni.showToast({
-      title: '请选择完整规格',
+      title: '库存不足',
       icon: 'none',
     });
     return;
   }
 
-  uni.navigateTo({
-    url: `/pages/order/confirm?productId=${product.value.id}&skuId=${selectedSku.value.id}`,
-  });
-}
+  try {
+    const item = {
+      productId: product.value.uuid, // 使用uuid作为productId
+      quantity: quantity.value,
+    };
 
-// 页面加载时初始化默认规格
-onMounted(() => {
-  product.value.specs.forEach((spec) => {
-    if (spec.options.length > 0) {
-      selectedSpecs.value[spec.name] = spec.options[0].value;
-    }
-  });
-});
+    cartStore.addToCart(item, userStore.uuid);
+
+    uni.showToast({
+      title: '已加入购物车',
+      icon: 'success',
+    });
+
+    selectedSpecs.value = {};
+    quantity.value = 1;
+  }
+  catch (error) {
+    console.error('添加到购物车失败:', error);
+    uni.showToast({
+      title: '添加失败，请重试',
+      icon: 'none',
+    });
+  }
+}
 </script>
 
 <style lang="scss" scoped>
@@ -507,11 +392,6 @@ onMounted(() => {
     display: flex;
     align-items: center;
     justify-content: center;
-
-    .iconfont {
-      font-size: 40rpx;
-      color: #fff;
-    }
   }
 
   .favorite-btn {
@@ -627,7 +507,7 @@ onMounted(() => {
       margin-bottom: 0;
     }
 
-    .spec-title {
+    .spec-name {
       display: block;
       font-size: 32rpx;
       color: #333;
@@ -822,7 +702,56 @@ onMounted(() => {
   }
 }
 
-.bottom-actions {
+.quantity-section {
+  display: flex;
+  align-items: center;
+  padding: 30rpx;
+  background: #fff;
+  margin-bottom: 20rpx;
+
+  .quantity-label {
+    font-size: 32rpx;
+    margin-right: 40rpx;
+  }
+
+  .quantity-controls {
+    display: flex;
+    align-items: center;
+    margin-right: 40rpx;
+
+    .quantity-btn {
+      width: 60rpx;
+      height: 60rpx;
+      border: 1rpx solid #ddd;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32rpx;
+
+      &.disabled {
+        color: #ccc;
+        background: #f5f5f5;
+      }
+    }
+
+    .quantity-input {
+      width: 100rpx;
+      height: 60rpx;
+      border: 1rpx solid #ddd;
+      border-left: none;
+      border-right: none;
+      text-align: center;
+      font-size: 28rpx;
+    }
+  }
+
+  .stock-info {
+    font-size: 24rpx;
+    color: #999;
+  }
+}
+
+.action-bar {
   position: fixed;
   bottom: 0;
   left: 0;
@@ -833,69 +762,60 @@ onMounted(() => {
   display: flex;
   align-items: center;
   z-index: 100;
+  box-shadow: 0 -2rpx 10rpx rgba(0, 0, 0, 0.1);
 
-  .action-left {
+  .action-left{  }
+
+  .action-right{
     display: flex;
-    margin-right: 30rpx;
-
-    .action-btn {
+    margin-left: auto;
+    width:400rpx;
+    height: 100rpx;
+    border: #ff4757;
+    .add-to-cart-btn{
       display: flex;
-      flex-direction: column;
+      justify-content: center;
       align-items: center;
-      margin-right: 40rpx;
-      position: relative;
-
-      .iconfont {
-        font-size: 40rpx;
-        color: #666;
-        margin-bottom: 8rpx;
+      height: 80rpx;
+      width: 140rpx;
+      background-image:  linear-gradient(90deg, #70c4ff 30%, #60c4ff 100%);
+      color: #fff;
+      font-size: 32rpx;
+      border-radius: 20rpx 0 0 20rpx;
+      .icon{
+        width: 60rpx;
+        height: 60rpx;
       }
-
-      .action-text {
-        font-size: 20rpx;
-        color: #666;
-      }
-
-      .cart-badge {
-        position: absolute;
-        top: -8rpx;
-        right: -8rpx;
-        background-color: #ff4757;
-        color: #fff;
-        font-size: 18rpx;
-        padding: 4rpx 8rpx;
-        border-radius: 20rpx;
-        min-width: 32rpx;
-        text-align: center;
-      }
+    }
+    .buy-now-btn{
+      background-image:  linear-gradient(90deg, #3fa5ec 30%, #4F95FF 100%);
+      color: #fff;
+      font-size: 32rpx;
+      border-radius: 0 20rpx 20rpx 0;
+      height: 80rpx;
+      flex:1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
   }
+}
 
-  .action-right {
-    flex: 1;
-    display: flex;
-    gap: 20rpx;
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
 
-    .add-cart-btn, .buy-now-btn {
-      flex: 1;
-      height: 80rpx;
-      border-radius: 40rpx;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 28rpx;
-      font-weight: 600;
-    }
-
-    .add-cart-btn {
-      background: linear-gradient(135deg, #ffa502, #ff6348);
-      color: #fff;
-    }
-
-    .buy-now-btn {
-      background: linear-gradient(135deg, #667eea, #764ba2);
-      color: #fff;
-    }
+  text {
+    font-size: 32rpx;
+    color: #666;
   }
 }
 </style>

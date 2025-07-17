@@ -61,9 +61,7 @@
     </view>
 
     <view v-else class="h-full center">
-      <text>
-        暂无收货地址
-      </text>
+      <up-empty text="暂无收货地址" mode="address" />
     </view>
 
     <!-- 底部安全区域和新增按钮 -->
@@ -95,7 +93,7 @@
               收货人
             </text>
             <u-input
-              v-model="newAddress.name" placeholder="请输入收货人姓名" border="none"
+              v-model="newAddress.name" max-length="10" placeholder="请输入收货人姓名" border="none"
               custom-style="background: #f8f8f8; border-radius: 8rpx; padding: 10rpx;"
             />
           </view>
@@ -307,7 +305,7 @@ const saveAddress = async () => {
   if (isEditMode.value) {
     const updatedAddress: UserAddress = {
       uuid: editingAddressId.value,
-      acc_id: userStore.uuid!,
+      acc_id: userStore.uuid,
       name: newAddress.value.name,
       mobile: newAddress.value.mobile,
       area: selectedRegion.value.replaceAll(' ', ''),
@@ -326,7 +324,7 @@ const saveAddress = async () => {
   }
   else {
     const addressItem: AddressItem = {
-      acc_id: userStore.uuid!,
+      acc_id: userStore.uuid,
       area: selectedRegion.value.replaceAll(' ', ''),
       detail_address: newAddress.value.detail_address,
       is_default: isDefault.value ? 'Y' : 'N',
