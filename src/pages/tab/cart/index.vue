@@ -50,16 +50,10 @@
 
       <!-- 空状态 -->
       <view v-if="cartStore.items.length === 0 && !cartStore.loading" class="empty-cart">
-        <image class="empty-image" src="/static/images/empty-cart.png" mode="aspectFit" />
-        <text class="empty-text">
-          购物车空空如也
-        </text>
-        <text class="empty-desc">
-          快去挑选心仪的商品吧~
-        </text>
+        <up-empty text="购物车空空如也~" mode="car" />
         <up-button
           size="normal"
-          custom-style="margin-top: 40rpx; width: 300rpx; background-color: #4F95FF; color: #fff; font-size: 32rpx;"
+          custom-style="margin-top: 40rpx; width: 300rpx; background-color: #4F95FF; color: #fff; font-size: 32rpx;border-radius: 12rpx;"
           @click="goShopping"
         >
           去逛逛
@@ -363,23 +357,6 @@ const handleCheckout = () => {
   justify-content: center;
   padding: 200rpx 40rpx;
   text-align: center;
-
-  .empty-image {
-    width: 300rpx;
-    height: 300rpx;
-    margin-bottom: 40rpx;
-  }
-
-  .empty-text {
-    font-size: 32rpx;
-    color: #333;
-    margin-bottom: 20rpx;
-  }
-
-  .empty-desc {
-    font-size: 28rpx;
-    color: #999;
-  }
 }
 
 .load-more {

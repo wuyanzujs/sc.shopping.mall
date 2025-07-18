@@ -57,3 +57,36 @@ export interface CartItem {
   productId?: string;
   quantity?: number;
 }
+
+// 商品分类中的商品信息
+export interface CategoryProduct {
+  uuid: string;
+  name: string;
+  description: string;
+  price_new: number;
+  price_old: number;
+  images: string[];
+  specs: string[];
+  stock: number;
+  type: number;
+  type_id: string;
+  agent_id: string;
+  create_tm: string;
+  update_tm: string | null;
+  deleted: string | null;
+}
+
+// 商品分类
+export interface ProductCategory {
+  id: string;
+  type_name: string;
+  type_code: string;
+  status: number;
+  children: CategoryProduct[];
+}
+
+// 分类列表响应
+export interface CategoryListResponse {
+  code: number;
+  data: ProductCategory[];
+}

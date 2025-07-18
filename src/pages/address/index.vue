@@ -1,7 +1,7 @@
 <template>
   <view class="address-page">
     <!-- 地址列表 -->
-    <view v-if="addressList.length > 0" class="address-list">
+    <view v-if="!loading && addressList.length > 0" class="address-list">
       <view v-for="(item) in addressList" :key="item.uuid" class="address-item">
         <!-- 地址信息 -->
         <view class="address-header">
@@ -35,6 +35,7 @@
           <view class="checkbox-area" @click="handleSetDefault(item)">
             <Checkbox
               :model-value="item.is_default === 'Y'"
+              :disabled="item.is_default === 'Y'"
               :checked="item.is_default"
             />
             <text class="set-default-text">
@@ -60,7 +61,7 @@
       </view>
     </view>
 
-    <view v-else class="h-full center">
+    <view v-else-if="!loading && addressList.length === 0" class="h-full center">
       <up-empty text="暂无收货地址" mode="address" />
     </view>
 
@@ -163,6 +164,12 @@
       @change="onRegionChange"
       @cancel="showRegionSelector = false" @close="showRegionSelector = false"
     />
+
+    <!-- 加载遮罩 -->
+    <up-loading-page
+      :loading="loading"
+      loading-text="加载中..."
+    />
   </view>
 </template>
 
@@ -176,6 +183,9 @@ import { getRegionByIndex, regionFilter } from '@/utils';
 import { computed, ref } from 'vue';
 
 const userStore = useUserStore();
+
+// 添加loading状态
+const loading = ref(false);
 
 // 新增地址弹窗相关
 const showAddPopup = ref(false);
@@ -204,7 +214,20 @@ const newAddress = ref<AddUserAddressParams>({
 
 // 获取用户地址列表
 const getUserAddressList = async () => {
-  addressList.value = await userStore.getUserAddressList();
+  try {
+    loading.value = true;
+    addressList.value = await userStore.getUserAddressList();
+  }
+  catch (error) {
+    console.error('获取地址列表失败:', error);
+    uni.showToast({
+      title: '获取地址列表失败',
+      icon: 'none',
+    });
+  }
+  finally {
+    loading.value = false;
+  }
 };
 
 // 复选框组数据
@@ -257,12 +280,25 @@ const showRegionPicker = () => {
 };
 
 onMounted(async () => {
-  const region = await CommonApi.getRegion();
-  const { province, firstCity = [], firstDistrict = [] } = regionFilter(region);
-  defaultRegion.value = [province, firstCity, firstDistrict];
-  regionList.value = region;
-  _selectedRegion.value = [province[0], firstCity[0], firstDistrict[0]];
-  getUserAddressList();
+  try {
+    loading.value = true;
+    const region = await CommonApi.getRegion();
+    const { province, firstCity = [], firstDistrict = [] } = regionFilter(region);
+    defaultRegion.value = [province, firstCity, firstDistrict];
+    regionList.value = region;
+    _selectedRegion.value = [province[0], firstCity[0], firstDistrict[0]];
+    await getUserAddressList();
+  }
+  catch (error) {
+    console.error('初始化失败:', error);
+    uni.showToast({
+      title: '页面初始化失败',
+      icon: 'none',
+    });
+  }
+  finally {
+    loading.value = false;
+  }
 });
 
 const isEditMode = ref(false); // 是否为编辑模式
@@ -667,10 +703,6 @@ const handleSetDefault = async (item: UserAddress) => {
     color: #999;
   }
 }
-
-// 删除地址类型选择器相关样式
-// .address-type-selector, .type-item, .type-text { ... }
-
 .default-switch {
   display: flex;
   align-items: center;
